@@ -46,21 +46,21 @@ class Visualisation():
         self.labels_list = self.image_analysis.labels_list
         self.rgb_dict = self.image_analysis.rgb_dict
 
-    def jzazbz_color_distribution(self, label):
+    def jzazbz_color_distribution(self, label, num_channels=3):
 
         ind = np.random.rand(90000)
-        rgblist = self.compressed_img_dict[label].reshape(90000,3)
+        rgblist = self.compressed_img_dict[label].reshape(90000,num_channels)
 
-        x = np.mean(np.array(self.jzazbz_dict[label]),axis=0).reshape(90000,3)[:,1]
+        x = np.mean(np.array(self.jzazbz_dict[label]),axis=0).reshape(90000,num_channels)[:,1]
         x_smooth = x#gaussian_filter(x, sigma=2.5)
         x_smooth = x_smooth[ind>0.75]
 
-        y = np.mean(np.array(self.jzazbz_dict[label]),axis=0).reshape(90000,3)[:,2]
+        y = np.mean(np.array(self.jzazbz_dict[label]),axis=0).reshape(90000,num_channels)[:,2]
         #y = y[ind>0.95]
         y_smooth = y#gaussian_filter(y, sigma=2.5)
         y_smooth = y_smooth[ind>0.75]
 
-        z = np.mean(np.array(self.jzazbz_dict[label]),axis=0).reshape(90000,3)[:,0]
+        z = np.mean(np.array(self.jzazbz_dict[label]),axis=0).reshape(90000,num_channels)[:,0]
         #z = z[ind>0.95]
         z_smooth = z#gaussian_filter(z, sigma=2.5)
         z_smooth = z_smooth[ind>0.75]
