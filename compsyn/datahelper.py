@@ -82,7 +82,7 @@ class ImageData():
                 return None
                 pass
 
-    def image_rgb_vals(self):
+    def image_rgb_vals(self, num_bins=27, num_channels=3):
 
         img_array_dict = self.rgb_dict
         rgb_dict = {}
@@ -96,9 +96,9 @@ class ImageData():
                 b = np.sum(np.ravel(img_array_dict[key][i][:,:,2]))
                 tot = 1.*r+g+b
                 rgb.append([r/tot,g/tot,b/tot])
-                dist = np.ravel(np.histogramdd(np.reshape(img_array_dict[key][i],((img_array_dict[key][i].shape[0])*(img_array_dict[key][i].shape[1]),3)), 
-                                      bins=(np.linspace(0,255,4),np.linspace(0,255,4),
-                                           np.linspace(0,255,4)), density=True)[0])
+                dist = np.ravel(np.histogramdd(np.reshape(img_array_dict[key][i],((img_array_dict[key][i].shape[0])*(img_array_dict[key][i].shape[1]),num_channels)), 
+                                      bins=(np.linspace(0,255,1+int(num_bins**(1./num_channels))),np.linspace(0,255,1+int(num_bins**(1./num_channels))),
+                                           np.linspace(0,255,1+int(num_bins**(1./num_channels)))), density=True)[0])
                 dist_array.append(dist)
             rgb_dict[key] = rgb
             rgb_dict_dist[key] = dist_array        
