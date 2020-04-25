@@ -18,7 +18,7 @@ class ImageAnalysis():
         self.rgb_vals_dict = image_data.rgb_vals_dict
         self.rgb_vals_dist_dict = image_data.rgb_vals_dist_dict
     # @jit
-    def compute_color_distributions(self, labels, color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36):
+    def compute_color_distributions(self, labels, color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36, num_bins=8, num_channels=3):
         dims = self.image_data.dims
         labels = labels if isinstance(labels, list) else [labels]
         self.jzazbz_dist_dict, self.hsv_dist_dict = {}, {}
@@ -37,9 +37,9 @@ class ImageAnalysis():
                 imageset = self.jzazbz_dict[key]
                 for i in range(len(imageset)):
                     jzazbz.append(imageset[i])
-                    dist = np.ravel(np.histogramdd(np.reshape(imageset[i][:,:,:],(dims[0]*dims[1],3)),
-                                          bins=(np.linspace(0,0.167,3),np.linspace(-0.1,0.11,3),
-                                               np.linspace(-0.156,0.115,3)), density=True)[0])
+                    dist = np.ravel(np.histogramdd(np.reshape(imageset[i][:,:,:],(dims[0]*dims[1],num_channels)),
+                                          bins=(np.linspace(0,0.167,1+int(num_bins**(1./num_channels))),np.linspace(-0.1,0.11,1+int(num_bins**(1./num_channels))),
+                                               np.linspace(-0.156,0.115,1+int(num_bins**(1./num_channels)))), density=True)[0])
                     dist_array.append(dist)
                 self.jzazbz_dist_dict[key] = dist_array
         if 'hsv' in color_rep:
@@ -77,9 +77,9 @@ class ImageAnalysis():
                     b = np.sum(np.ravel(imageset[i][:,:,2]))
                     tot = 1.*r+g+b
                     rgb.append([r/tot,g/tot,b/tot])
-                    dist = np.ravel(np.histogramdd(np.reshape(imageset[i],(dims[0]*dims[1],3)),
-                                          bins=(np.linspace(0,255,3),np.linspace(0,255,3),
-                                               np.linspace(0,255,3)), density=True)[0])
+                    dist = np.ravel(np.histogramdd(np.reshape(imageset[i],(dims[0]*dims[1],num_channels)),
+                                          bins=(np.linspace(0,255,1+int(num_bins**(1./num_channels))),np.linspace(0,255,1+int(num_bins**(1./num_channels))),
+                                               np.linspace(0,255,1+int(num_bins**(1./num_channels)))), density=True)[0])
                     dist_array.append(dist)
                 self.rgb_ratio_dict[key] = rgb
                 self.rgb_dist_dict[key] = dist_array
@@ -106,16 +106,26 @@ class ImageAnalysis():
         self.entropy_dict = entropy_dict
         self.entropy_dict_js = entropy_dict_js
         return entropy_dict, entropy_dict_js
+
+    def kl_divergence(dist1, dist2, symmetrized=True):
+        if symmetrized=True:
+            return (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
+        else:
+            return scipy.stats.entropy(dist1,dist2)
     
+    def js_divergence(dist1, dist2):
+        mean_dist = (dist1 + dist2)/2.
+        return (scipy.stats.entropy(dist1,mean) + scipy.stats.entropy(dist2,mean))/2.
+
     # @jit
     def cross_entropy_between_labels(self, symmetrized=True):
-        rgb_dict = self.jzazbz_dist_dict
+        color_dict = self.jzazbz_dist_dict
         words = self.labels_list
 
         mean_rgb_dict = {}
-        for key in rgb_dict:
-            mean_rgb_array = np.mean(np.array(rgb_dict[key]),axis=0)
-            mean_rgb_dict[key] = mean_rgb_array
+        for key in color_dict:
+            mean_color_array = np.mean(np.array(color_dict[key]),axis=0)
+            mean_color_dict[key] = mean_color_array
         labels_entropy_dict = {}
         labels_entropy_dict_js = {}
         color_sym_matrix = []
@@ -125,11 +135,11 @@ class ImageAnalysis():
             row_js = []
             for word2 in words:
                 if symmetrized == True:
-                    mean = (mean_rgb_dict[word1] + mean_rgb_dict[word2])/2.
-                    entropy = (scipy.stats.entropy(mean_rgb_dict[word1],mean_rgb_dict[word2])+scipy.stats.entropy(mean_rgb_dict[word2],mean_rgb_dict[word1]))/2.
-                    entropy_js = (scipy.stats.entropy(mean_rgb_dict[word1],mean) + scipy.stats.entropy(mean_rgb_dict[word2],mean))/2.
+                    mean = (mean_color_dict[word1] + mean_color_dict[word2])/2.
+                    entropy = kl_divergence(mean_color_dict[word1],mean_color_dict[word2],symmetrized)
+                    entropy_js = js_divergence(mean_color_dict[word1],mean_color_dict[word2])
                 else:
-                    entropy = scipy.stats.entropy(mean_rgb_dict[word1],mean_rgb_dict[word2])
+                    entropy = scipy.stats.entropy(mean_color_dict[word1],mean_color_dict[word2])
                     entropy_js = []
                 row.append(entropy)
                 row_js.append(entropy_js)
@@ -152,18 +162,18 @@ class ImageAnalysis():
         self.cross_entropy_matrix_js = color_sym_matrix_js
 
     # @jit
-    def cross_entropy_between_all_images(rgb_dict, words):
+    def cross_entropy_between_all_images(color_dict, words):
         entropy_dict_all = {}
         color_sym_matrix_js = []
         for word1 in words:
             row_js = []
             for word2 in words:
                 entropy_js = []
-                for i in range(len(rgb_dict[word1])):
-                    for j in range(len(rgb_dict[word2])):
+                for i in range(len(color_dict[word1])):
+                    for j in range(len(color_dict[word2])):
                         try:
-                            mean = (rgb_dict[word1][i] + rgb_dict[word2][j])/2.
-                            entropy_js.append(scipy.stats.entropy(rgb_dict[word1][i],mean) + scipy.stats.entropy(rgb_dict[word2][j],mean))/2.
+                            mean = (color_dict[word1][i] + color_dict[word2][j])/2.
+                            entropy_js.append(scipy.stats.entropy(color_dict[word1][i],mean) + scipy.stats.entropy(color_dict[word2][j],mean))/2.
                         except:
                             entropy_js.append(np.mean(entropy_js))
                 entropy_dict_all[word1 + '_' + word2] = entropy_js
@@ -200,16 +210,16 @@ class ImageAnalysis():
     #     return compressed_img_array_dict
 
     # @jit
-    def get_composite_image(self, labels=None, compress_dim=300):
+    def get_composite_image(self, labels=None, compress_dim=300, num_channels=3):
         compressed_img_dict = {}
         img_data = self.image_data.rgb_dict
         if not labels:
             labels = img_data.keys()
         for label in labels:
             print(label + " is being compressed.")
-            compressed_img_array = np.zeros((compress_dim,compress_dim,3))
+            compressed_img_array = np.zeros((compress_dim,compress_dim,num_channels))
             for n in range(len(img_data[label])):
-                if np.shape(img_data[label][n]) == (compress_dim, compress_dim, 3):
+                if np.shape(img_data[label][n]) == (compress_dim, compress_dim, num_channels):
                     for i in range(compress_dim):
                         for j in range(compress_dim):
                             compressed_img_array[i][j] += img_data[label][n][i][j]/(1.*len(img_data[label]))
