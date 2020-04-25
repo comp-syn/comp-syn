@@ -5,7 +5,7 @@ comp-syn is a python package which provides a novel methodology to explore relat
 
 The theoretical frameword is described in:
 
-Guilbeault, Douglas, Ethan Nadler, Mark Chu, Ruggiero Lo Sardo, Aabir Abubaker Kar, and Bhargav Srinivasa Desikan. "Color Associations in Abstract Semantic Domains." *Forthcoming in Cognition* (2020).
+Douglas Guilbeault , Ethan Nadler, Mark Chu, Ruggiero Lo Sardo, Aabir Abubaker Kar, and Bhargav Srinivasa Desikan. "Color Associations in Abstract Semantic Domains." *Forthcoming in Cognition* (2020).
 
 The work arose through a collaboration between the contributors at the Santa Fe Institute's Complex System Summer School 2019. 
 
