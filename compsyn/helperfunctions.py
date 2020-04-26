@@ -57,7 +57,11 @@ wd.quit()
 # In[3]:
 
 
-def fetch_image_urls(query:str, max_links_to_fetch:int, wd:webdriver, sleep_between_interactions:int=1):
+def fetch_image_urls(query:str, max_links_to_fetch:int, 
+                        wd:webdriver, thumb_css = "img.Q4LuWd", 
+                     img_css = "img.n3VNCb", load_page_css = ".mye4qd", 
+                     sleep_between_interactions:int=1):
+    
     def scroll_to_end(wd):
         wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(sleep_between_interactions)    
@@ -68,14 +72,12 @@ def fetch_image_urls(query:str, max_links_to_fetch:int, wd:webdriver, sleep_betw
     # load the page
     wd.get(search_url.format(q=query))
 
-    image_urls = set()
-    image_count = 0
-    results_start = 0
-    while image_count < max_links_to_fetch:
-        scroll_to_end(wd)
+    image_urls, image_count, results_start = set(), 0, 0
 
-        # get all image thumbnail results
-        thumbnail_results = wd.find_elements_by_css_selector("img.Q4LuWd")
+    while image_count < max_links_to_fetch:
+        
+        scroll_to_end(wd)
+        thumbnail_results = wd.find_elements_by_css_selector(thumb_css) # get all image thumbnail results
         number_results = len(thumbnail_results)
         
         print(f"Found: {number_results} search results. Extracting links from {results_start}:{number_results}")
@@ -89,27 +91,29 @@ def fetch_image_urls(query:str, max_links_to_fetch:int, wd:webdriver, sleep_betw
                 continue
 
             # extract image urls    
-            actual_images = wd.find_elements_by_css_selector('img.n3VNCb')
+            actual_images = wd.find_elements_by_css_selector(img_css)
             for actual_image in actual_images:
                 if actual_image.get_attribute('src') and 'http' in actual_image.get_attribute('src'):
                     image_urls.add(actual_image.get_attribute('src'))
 
             image_count = len(image_urls)
 
-            if len(image_urls) >= max_links_to_fetch:
-                print(f"Found: {len(image_urls)} image links, done!")
-                break
+        if len(image_urls) >= max_links_to_fetch:
+            print(f"Found: {len(image_urls)} image links, done!")
+            break
+        
         else:
             print("Found:", len(image_urls), "image links, looking for more ...")
             time.sleep(30)
-            return
-            load_more_button = wd.find_element_by_css_selector(".mye4qd")
+            load_more_button = wd.find_element_by_css_selector(load_page_css)
             if load_more_button:
-                wd.execute_script("document.querySelector('.mye4qd').click();")
+                wd.execute_script("document.querySelector('" + str(load_page_css) + "').click();")
 
         # move the result startpoint further down
         results_start = len(thumbnail_results)
-
+    
+    image_urls = set(list(image_urls)[0:max_links_to_fetch])
+    
     return image_urls
 
 
@@ -121,39 +125,39 @@ def persist_image(folder_path:str,url:str):
         image_content = requests.get(url).content
 
     except Exception as e:
-        print(f"ERROR - Could not download {url} - {e}")
+        print(f"ERROR - Could not download url")
 
     try:
         image_file = io.BytesIO(image_content)
         image = Image.open(image_file).convert('RGB')
         file_path = os.path.join(folder_path,hashlib.sha1(image_content).hexdigest()[:10] + '.jpg')
+        
         with open(file_path, 'wb') as f:
             image.save(f, "JPEG", quality=85)
-        print(f"SUCCESS - saved {url} - as {file_path}")
+        #print(f"SUCCESS - saved {url} - as {file_path}")
+        
     except Exception as e:
-        print(f"ERROR - Could not save {url} - {e}")
+        print(f"ERROR - Could not save url")
         pass
 
 
 # In[5]:
 
 
-def search_and_download(search_term:str,driver_path:str,home, target_path='./downloads',number_images=5):
-    target_folder = os.path.join(target_path,'_'.join(search_term.lower().split(' ')))
+def search_and_download(search_term:str,driver_path:str,home, target_path='./downloads',
+                        number_images=5,sleep_time=0.4):
+    
+    target_folder = os.path.join(target_path, search_term)
 
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
 
     with webdriver.Chrome(executable_path=driver_path) as wd:
-        res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=0.5)
+        res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=sleep_time)
     
-    if res: 
-        for elem in res:
-            try:
-                persist_image(target_folder,elem)
-            except Exception as e:
-                pass
-
+    for elem in res:
+        persist_image(target_folder,elem)
+    
     wd.quit()
     os.chdir(home)
     
@@ -161,8 +165,6 @@ def search_and_download(search_term:str,driver_path:str,home, target_path='./dow
 
 
 # In[6]:
-
-
 def get_imgs(searchterms_list, home):
     os.chdir(home)
     
@@ -174,8 +176,6 @@ def get_imgs(searchterms_list, home):
 
 
 # In[7]:
-
-
 def run_google_vision(img_urls_dict):
     print("Classifying Imgs. w. Google Vision API...")
     
