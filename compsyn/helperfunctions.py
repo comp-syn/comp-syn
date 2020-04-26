@@ -56,15 +56,26 @@ wd.quit()
 
 # In[3]:
 
+def fuzzy_sleep(min_time: int) -> None:
+    """
+        Fuzz wait times between [min_time, min_time*2]
+    """
+    time.sleep(min_time + min_time * random.random())
 
-def fetch_image_urls(query:str, max_links_to_fetch:int, 
-                        wd:webdriver, thumb_css = "img.Q4LuWd", 
-                     img_css = "img.n3VNCb", load_page_css = ".mye4qd", 
-                     sleep_between_interactions:int=1):
+
+def fetch_image_urls(
+    query: str, 
+    max_links_to_fetch: int, 
+    wd: webdriver, 
+    thumb_css: str = "img.Q4LuWd", 
+    img_css: str = "img.n3VNCb", 
+    load_page_css: str = ".mye4qd", 
+    sleep_between_interactions: int = 1
+):
     
     def scroll_to_end(wd):
         wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(sleep_between_interactions)    
+        fuzzy_sleep(sleep_between_interactions)    
     
     # build the google query
     search_url = "https://www.google.com/search?safe=off&site=&tbm=isch&source=hp&q={q}&oq={q}&gs_l=img"
@@ -72,12 +83,16 @@ def fetch_image_urls(query:str, max_links_to_fetch:int,
     # load the page
     wd.get(search_url.format(q=query))
 
-    image_urls, image_count, results_start = set(), 0, 0
+    image_urls = set()
+    image_count = 0
+    results_start = 0
 
     while image_count < max_links_to_fetch:
         
         scroll_to_end(wd)
         thumbnail_results = wd.find_elements_by_css_selector(thumb_css) # get all image thumbnail results
+        if len(thumbnail_results) == 0:
+            print(f"WARNING: found no thumbnails using the selector {thumb_css}")
         number_results = len(thumbnail_results)
         
         print(f"Found: {number_results} search results. Extracting links from {results_start}:{number_results}")
@@ -86,36 +101,36 @@ def fetch_image_urls(query:str, max_links_to_fetch:int,
             # try to click every thumbnail such that we can get the real image behind it
             try:
                 img.click()
-                time.sleep(sleep_between_interactions)
+                fuzzy_sleep(sleep_between_interactions)
             except Exception:
                 continue
 
             # extract image urls    
             actual_images = wd.find_elements_by_css_selector(img_css)
+            if len(actual_images) == 0:
+                print(f"WARNING: found no images using the selector {img_css}")
             for actual_image in actual_images:
                 if actual_image.get_attribute('src') and 'http' in actual_image.get_attribute('src'):
                     image_urls.add(actual_image.get_attribute('src'))
+                    image_count += 1
+                    if image_count >= max_links_to_fetch:
+                        print(f"Found: {image_count} image links, done!")
+                        return image_urls
 
-            image_count = len(image_urls)
-
-        if len(image_urls) >= max_links_to_fetch:
-            print(f"Found: {len(image_urls)} image links, done!")
-            break
-        
         else:
-            print("Found:", len(image_urls), "image links, looking for more ...")
-            time.sleep(30)
+            print(f"Found: {image_count} image links, looking for more ...")
             load_more_button = wd.find_element_by_css_selector(load_page_css)
             if load_more_button:
-                wd.execute_script("document.querySelector('" + str(load_page_css) + "').click();")
+                fuzzy_sleep(sleep_between_interactions)
+                wd.execute_script(f"document.querySelector('{load_page_css}').click();")
+            else:
+                print(
+                    f"WARNING: {image_count}/{max_links_to_fetch} images gathered, but no 'load_more_button' found with the selector '{load_page_css}', returning what we have so far"
+                )
+                return image_urls
 
         # move the result startpoint further down
         results_start = len(thumbnail_results)
-    
-    image_urls = set(list(image_urls)[0:max_links_to_fetch])
-    
-    return image_urls
-
 
 # In[4]:
 
