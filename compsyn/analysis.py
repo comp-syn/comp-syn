@@ -217,13 +217,8 @@ class ImageAnalysis():
             labels = img_data.keys()
         for label in labels:
             print(label + " is being compressed.")
-            compressed_img_array = np.zeros((compress_dim,compress_dim,num_channels))
-            for n in range(len(img_data[label])):
-                if np.shape(img_data[label][n]) == (compress_dim, compress_dim, num_channels):
-                    for i in range(compress_dim):
-                        for j in range(compress_dim):
-                            compressed_img_array[i][j] += img_data[label][n][i][j]/(1.*len(img_data[label]))
-            compressed_img_dict[label] = compressed_img_array
-
+            compressed_img_dict[label] = np.zeros((compress_dim,compress_dim,num_channels))
+            compressed_img_dict[label] = np.sum(img_data[label],axis=0)/(1.*len(img_data[label]))
+            
         self.compressed_img_dict = compressed_img_dict
         return compressed_img_dict
