@@ -108,7 +108,7 @@ class ImageAnalysis():
         return entropy_dict, entropy_dict_js
 
     def kl_divergence(dist1, dist2, symmetrized=True):
-        if symmetrized=True:
+        if symmetrized==True:
             return (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
         else:
             return scipy.stats.entropy(dist1,dist2)
