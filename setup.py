@@ -8,13 +8,13 @@ DESCRIPTION = ''
 with open('README.rst') as f:
     LONG_DESCRIPTION = f.read()
 
-version = "0.1.0"
+version = "0.1.1"
 setup(name='compsyn',
       version=version,
-      description='Python package to explore the color of language',
+      description='python package to explore the color of language',
       author='Bhargav Srinivasa Desikan',
       author_email='bhargavvader@gmail.com',
-      url='https://github.com/bakerwho/comp-syn',
+      url='https://github.com/comp-syn/comp-syn',
       license='MIT',
       classifiers=[
           'Development Status :: 4 - Beta',
@@ -30,10 +30,25 @@ setup(name='compsyn',
           'scipy',
           'pillow',
           'matplotlib',
+          'time',
+          'numba',
+          'seaborn',
+          'colorsys',
+          'scikit-learn',
+          'gzip',
+          'google_images_download', #for downloading images
+          'google-cloud-vision',
+          'textblob',
+          'nltk',
+          'random_word',
+          'selenium',  
+          'bs4'
       ],
       keywords=[
           'Image Analysis',
-          'Computational Syn',
+          'Computational Synaesthesia',
+          'Color Science',
+          'Computational Social Science'
           'Cognitive Science'
       ],
       long_description=LONG_DESCRIPTION)
