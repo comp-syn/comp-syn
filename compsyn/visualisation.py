@@ -34,7 +34,7 @@ cmap = cm.plasma(np.linspace(0.0, 0.5, 3))
 sch.set_link_color_palette([colors.rgb2hex(rgb[:3]) for rgb in cmap])
 
 def getImage(path):
-    return OffsetImage(plt.imread(path),zoom=0.2)
+    return OffsetImage(plt.imread(path), zoom=0.2)
 
 class Visualisation():
 
@@ -216,7 +216,7 @@ class Visualisation():
 
         paths = []
         for key in jzbzaz_keys:
-            paths.extend(np.array(['colorgrams/{}.png'.format(key)]))
+            paths.extend(np.array(['colorgrams/{}'.format(key) + '_colorgram.png']))
 
         fig, ax = plt.subplots(figsize=(14,14))
 

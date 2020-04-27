@@ -117,6 +117,7 @@ class ImageData():
                 try:
                     self.jzazbz_dict[label] = [rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]]
                 except:
+                    
                     pass
 
     def print_labels(self):

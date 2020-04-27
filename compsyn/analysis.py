@@ -6,6 +6,20 @@ import time
 import matplotlib.colors as mplcolors
 import compsyn as cs
 from numba import jit
+import os
+import PIL
+
+
+def kl_divergence(dist1, dist2, symmetrized=True):
+    if symmetrized==True:
+        return (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
+    else:
+        return scipy.stats.entropy(dist1,dist2)
+
+def js_divergence(dist1, dist2):
+    mean_dist = (dist1 + dist2)/2.
+    return (scipy.stats.entropy(dist1, mean_dist) + scipy.stats.entropy(dist2, mean_dist))/2.
+
 
 class ImageAnalysis():
     def __init__(self, image_data):
@@ -107,22 +121,12 @@ class ImageAnalysis():
         self.entropy_dict_js = entropy_dict_js
         return entropy_dict, entropy_dict_js
 
-    def kl_divergence(dist1, dist2, symmetrized=True):
-        if symmetrized==True:
-            return (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
-        else:
-            return scipy.stats.entropy(dist1,dist2)
-    
-    def js_divergence(dist1, dist2):
-        mean_dist = (dist1 + dist2)/2.
-        return (scipy.stats.entropy(dist1,mean) + scipy.stats.entropy(dist2,mean))/2.
-
     # @jit
     def cross_entropy_between_labels(self, symmetrized=True):
         color_dict = self.jzazbz_dist_dict
         words = self.labels_list
-
-        mean_rgb_dict = {}
+        mean_color_dict = {}
+        
         for key in color_dict:
             mean_color_array = np.mean(np.array(color_dict[key]),axis=0)
             mean_color_dict[key] = mean_color_array
@@ -130,16 +134,17 @@ class ImageAnalysis():
         labels_entropy_dict_js = {}
         color_sym_matrix = []
         color_sym_matrix_js = []
+        
         for word1 in words:
             row = []
             row_js = []
             for word2 in words:
                 if symmetrized == True:
                     mean = (mean_color_dict[word1] + mean_color_dict[word2])/2.
-                    entropy = kl_divergence(mean_color_dict[word1],mean_color_dict[word2],symmetrized)
-                    entropy_js = js_divergence(mean_color_dict[word1],mean_color_dict[word2])
+                    entropy = kl_divergence(mean_color_dict[word1],mean_color_dict[word2], symmetrized)
+                    entropy_js = js_divergence(mean_color_dict[word1], mean_color_dict[word2])
                 else:
-                    entropy = scipy.stats.entropy(mean_color_dict[word1],mean_color_dict[word2])
+                    entropy = scipy.stats.entropy(mean_color_dict[word1], mean_color_dict[word2])
                     entropy_js = []
                 row.append(entropy)
                 row_js.append(entropy_js)
@@ -185,8 +190,12 @@ class ImageAnalysis():
     def compress_color_data(self):
         avg_rgb_dict = {} #dictionary of average color coordinates
         for label in self.labels_list:
-            avg_rgb = np.mean(np.mean(np.mean(self.jzazbz_dict[label],axis=0),axis=0),axis=0)
-            avg_rgb_dict[label] = avg_rgb
+            try:
+                avg_rgb = np.mean(np.mean(np.mean(self.jzazbz_dict[label],axis=0),axis=0),axis=0)
+                avg_rgb_dict[label] = avg_rgb
+            except:
+                print(label + " failed")
+                pass
         self.avg_rgb_dict = avg_rgb_dict
 
         jzazbz_dict_simp = {}
@@ -209,7 +218,7 @@ class ImageAnalysis():
     #         compressed_img_array_dict[word] = compressed_img_array
     #     return compressed_img_array_dict
 
-    # @jit
+
     def get_composite_image(self, labels=None, compress_dim=300, num_channels=3):
         compressed_img_dict = {}
         img_data = self.image_data.rgb_dict
@@ -222,3 +231,13 @@ class ImageAnalysis():
             
         self.compressed_img_dict = compressed_img_dict
         return compressed_img_dict
+
+
+    def save_colorgram_to_disk(self):
+        if not os.path.exists('colorgrams'):
+            os.makedirs('colorgrams')
+
+        if len(self.compressed_img_dict) > 0:
+            for img in self.compressed_img_dict:
+                colorgram = PIL.Image.fromarray(self.compressed_img_dict[img].astype(np.uint8))
+                colorgram.save(os.path.join("colorgrams", img + "_colorgram.png"))
