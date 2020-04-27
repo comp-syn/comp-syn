@@ -36,25 +36,21 @@ from sklearn.manifold import TSNE
 import gzip
 
 
-#This client for the Google API needs to be set for the VISION classification
-#but it is not necessary for the selenium scaper for image downloading 
-
-#os.environ["GOOGLE_APPLICATION_CREDENTIALS"]='COMPSYN2-18e251c693df.json'
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]='compsyn3-8cf6580619a9.json'
-client = vision.ImageAnnotatorClient() # authentification via environment variable
-
-#See here for scraper details: 
-#https://towardsdatascience.com/image-scraping-with-python-a96feda8af2d
 
 
-# In[2]:
+def settings(application_cred_name, driver_path):
+    #This client for the Google API needs to be set for the VISION classification
+    #but it is not necessary for the selenium scaper for image downloading 
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=application_cred_name
+    client = vision.ImageAnnotatorClient() # authentification via environment variable
 
-DRIVER_PATH = "/Users/bhargavvader/open_source/comp-syn/chromedriver"
-wd = webdriver.Chrome(DRIVER_PATH) #incase you are chrome
-wd.quit()
+    #See here for scraper details: 
+    #https://towardsdatascience.com/image-scraping-with-python-a96feda8af2d
+    DRIVER_PATH =driver_path
+    wd = webdriver.Chrome(DRIVER_PATH) #incase you are chrome
+    wd.quit()
 
 
-# In[3]:
 
 def fuzzy_sleep(min_time: int) -> None:
     """

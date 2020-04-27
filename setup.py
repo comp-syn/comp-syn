@@ -8,7 +8,7 @@ DESCRIPTION = ''
 with open('README.rst') as f:
     LONG_DESCRIPTION = f.read()
 
-version = "0.1.1"
+version = "0.2.1"
 setup(name='compsyn',
       version=version,
       description='python package to explore the color of language',
@@ -30,12 +30,9 @@ setup(name='compsyn',
           'scipy',
           'pillow',
           'matplotlib',
-          'time',
           'numba',
           'seaborn',
-          'colorsys',
           'scikit-learn',
-          'gzip',
           'google_images_download', #for downloading images
           'google-cloud-vision',
           'textblob',
