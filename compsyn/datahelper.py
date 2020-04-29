@@ -8,8 +8,14 @@ from PIL import Image
 import numpy as np
 from collections import defaultdict
 from numba import jit
+from compsyn import compsynpath
 
-test_jzazbz_array = np.load('jzazbz_array.npy')
+jzazbz_filepath = os.path.join(compsynpath, 'jzazbz_array.npy')
+
+try:
+    test_jzazbz_array = np.load(jzazbz_filepath)
+except FileNotFoundError:
+    print(f'Warning: jzazbz_array.npy not found at {jzazbz_filepath}')
 
 @jit
 def rgb_array_to_jzazbz_array(rgb_array):
@@ -59,7 +65,7 @@ class ImageData():
                 continue
             if img is not None:
                 imglist.append(img)
-        
+
         if compute_jzazbz:
             self.store_jzazbz_from_rgb(label)
         self.rgb_dict[label] = imglist
@@ -96,12 +102,12 @@ class ImageData():
                 b = np.sum(np.ravel(img_array_dict[key][i][:,:,2]))
                 tot = 1.*r+g+b
                 rgb.append([r/tot,g/tot,b/tot])
-                dist = np.ravel(np.histogramdd(np.reshape(img_array_dict[key][i],((img_array_dict[key][i].shape[0])*(img_array_dict[key][i].shape[1]),num_channels)), 
+                dist = np.ravel(np.histogramdd(np.reshape(img_array_dict[key][i],((img_array_dict[key][i].shape[0])*(img_array_dict[key][i].shape[1]),num_channels)),
                                       bins=(np.linspace(0,255,1+int(num_bins**(1./num_channels))),np.linspace(0,255,1+int(num_bins**(1./num_channels))),
                                            np.linspace(0,255,1+int(num_bins**(1./num_channels)))), density=True)[0])
                 dist_array.append(dist)
             rgb_dict[key] = rgb
-            rgb_dict_dist[key] = dist_array        
+            rgb_dict_dist[key] = dist_array
 
         self.rgb_vals_dict = rgb_dict
         self.rgb_vals_dist_dict = rgb_dict_dist
@@ -117,12 +123,9 @@ class ImageData():
                 try:
                     self.jzazbz_dict[label] = [rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]]
                 except:
-                    
+
                     pass
 
     def print_labels(self):
         self.labels_list = list(self.rgb_dict.keys())
         print(self.labels_list)
-
-
-

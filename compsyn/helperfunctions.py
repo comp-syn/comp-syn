@@ -10,7 +10,7 @@ import datetime
 import os
 import json
 import rapidjson
-import io 
+import io
 import hashlib
 import requests
 from bs4 import BeautifulSoup
@@ -26,7 +26,7 @@ from textblob.wordnet import Synset
 import numpy as np
 from google.cloud import vision_v1p2beta1 as vision
 from google.protobuf.json_format import MessageToDict
-from google_images_download import google_images_download 
+from google_images_download import google_images_download
 import pickle
 import matplotlib.pyplot as plt
 from numba import jit
@@ -35,16 +35,20 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from sklearn.manifold import TSNE
 import gzip
 
-
+from urllib import request
+def download_jzazbz_array_npy(url='https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view?usp=sharing'):
+    from compsyn import compsynpath
+    jzazbz_filepath = os.path.join(compsynpath, 'jzazbz_array.npy')
+    urllib.request.urlretrieve(url, jzazbz_filepath)
 
 
 def settings(application_cred_name, driver_path):
     #This client for the Google API needs to be set for the VISION classification
-    #but it is not necessary for the selenium scaper for image downloading 
+    #but it is not necessary for the selenium scaper for image downloading
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=application_cred_name
     client = vision.ImageAnnotatorClient() # authentification via environment variable
 
-    #See here for scraper details: 
+    #See here for scraper details:
     #https://towardsdatascience.com/image-scraping-with-python-a96feda8af2d
     DRIVER_PATH =driver_path
     wd = webdriver.Chrome(DRIVER_PATH) #incase you are chrome
@@ -60,19 +64,19 @@ def fuzzy_sleep(min_time: int) -> None:
 
 
 def fetch_image_urls(
-    query: str, 
-    max_links_to_fetch: int, 
-    wd: webdriver, 
-    thumb_css: str = "img.Q4LuWd", 
-    img_css: str = "img.n3VNCb", 
-    load_page_css: str = ".mye4qd", 
+    query: str,
+    max_links_to_fetch: int,
+    wd: webdriver,
+    thumb_css: str = "img.Q4LuWd",
+    img_css: str = "img.n3VNCb",
+    load_page_css: str = ".mye4qd",
     sleep_between_interactions: int = 1
 ):
-    
+
     def scroll_to_end(wd):
         wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        fuzzy_sleep(sleep_between_interactions)    
-    
+        fuzzy_sleep(sleep_between_interactions)
+
     # build the google query
     search_url = "https://www.google.com/search?safe=off&site=&tbm=isch&source=hp&q={q}&oq={q}&gs_l=img"
 
@@ -84,15 +88,15 @@ def fetch_image_urls(
     results_start = 0
 
     while image_count < max_links_to_fetch:
-        
+
         scroll_to_end(wd)
         thumbnail_results = wd.find_elements_by_css_selector(thumb_css) # get all image thumbnail results
         if len(thumbnail_results) == 0:
             print(f"WARNING: found no thumbnails using the selector {thumb_css}")
         number_results = len(thumbnail_results)
-        
+
         print(f"Found: {number_results} search results. Extracting links from {results_start}:{number_results}")
-        
+
         for img in thumbnail_results[results_start:number_results]:
             # try to click every thumbnail such that we can get the real image behind it
             try:
@@ -101,7 +105,7 @@ def fetch_image_urls(
             except Exception:
                 continue
 
-            # extract image urls    
+            # extract image urls
             actual_images = wd.find_elements_by_css_selector(img_css)
             if len(actual_images) == 0:
                 print(f"WARNING: found no images using the selector {img_css}")
@@ -142,11 +146,11 @@ def persist_image(folder_path:str,url:str):
         image_file = io.BytesIO(image_content)
         image = Image.open(image_file).convert('RGB')
         file_path = os.path.join(folder_path,hashlib.sha1(image_content).hexdigest()[:10] + '.jpg')
-        
+
         with open(file_path, 'wb') as f:
             image.save(f, "JPEG", quality=85)
         #print(f"SUCCESS - saved {url} - as {file_path}")
-        
+
     except Exception as e:
         print(f"ERROR - Could not save url")
         pass
@@ -157,7 +161,7 @@ def persist_image(folder_path:str,url:str):
 
 def search_and_download(search_term:str,driver_path:str,home, target_path='./downloads',
                         number_images=5,sleep_time=0.4):
-    
+
     target_folder = os.path.join(target_path, search_term)
 
     if not os.path.exists(target_folder):
@@ -165,20 +169,20 @@ def search_and_download(search_term:str,driver_path:str,home, target_path='./dow
 
     with webdriver.Chrome(executable_path=driver_path) as wd:
         res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=sleep_time)
-    
+
     for elem in res:
         persist_image(target_folder,elem)
-    
+
     wd.quit()
     os.chdir(home)
-    
+
     return res
 
 
 # In[6]:
 def get_imgs(searchterms_list, home):
     os.chdir(home)
-    
+
     img_dict = {}
     for term in searchterms_list:
         term_img_set = os.listdir('downloads/' + term)
@@ -189,18 +193,18 @@ def get_imgs(searchterms_list, home):
 # In[7]:
 def run_google_vision(img_urls_dict):
     print("Classifying Imgs. w. Google Vision API...")
-    
+
     client = vision.ImageAnnotatorClient()
     image = vision.types.Image()
-    
-    for search_term in img_urls_dict.keys(): 
+
+    for search_term in img_urls_dict.keys():
         img_urls = img_urls_dict[search_term]
-    
+
         img_classified_dict = {}
         img_classified_dict[search_term] = {}
-        
-        for image_uri in img_urls: 
-            try: 
+
+        for image_uri in img_urls:
+            try:
                 image.source.image_uri = image_uri
                 response = client.label_detection(image=image)
                 img_classified_dict[image_uri]={}
@@ -208,7 +212,7 @@ def run_google_vision(img_urls_dict):
                 for label in response.label_annotations:
                     img_classified_dict[search_term][image_uri] = {}
                     img_classified_dict[search_term][image_uri][label.description] = label.score
-                    
+
             except: pass
 
     return img_classified_dict
@@ -226,12 +230,12 @@ def write_to_json(to_save, filename):
 
 
 def write_img_classifications_to_file(home, search_terms, img_classified_dict):
-    
+
     os.chdir(home + "/image_classifications")
-    
+
     for term in search_terms:
         term_data = img_classified_dict[term]
-        
+
         if term_data:
             filename = "classifications_" + term + '_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M") + ".json"
             file_exist = os.path.isfile(filename)
@@ -241,16 +245,16 @@ def write_img_classifications_to_file(home, search_terms, img_classified_dict):
 
                 with open(filename, encoding='utf-8') as f:
                     term_data_orig = json.load(f)
-                    
+
                 term_data_orig.update(term_data)
                 os.remove(filename)
                 write_to_json(term_data_orig, filename)
 
-            else: 
+            else:
                 print("File new! Saving..")
                 write_to_json(term_data, filename)
 
-    os.chdir(home)          
+    os.chdir(home)
 
 
 # In[10]:
@@ -259,18 +263,18 @@ def write_img_classifications_to_file(home, search_terms, img_classified_dict):
 def get_branching_factor(wordlist):
 
     branching_dict={}
-    
-    for word in wordlist:  
-        
-        try: 
+
+    for word in wordlist:
+
+        try:
             wordsyn = wn.synsets(word)[0]
             branches = set([i for i in wordsyn.closure(lambda s:s.hyponyms())])
-            branching_factor = len(branches)+1 #1 for the node itself 
+            branching_factor = len(branches)+1 #1 for the node itself
             branching_dict[word] = branching_factor
-        except: 
+        except:
             branching_dict[word] = 0
-        
-    return branching_dict  
+
+    return branching_dict
 
 
 # In[11]:
@@ -279,13 +283,13 @@ def get_branching_factor(wordlist):
 def get_wordnet_data(wordlist,home):
     os.chdir(home)
     if not os.path.isdir('/tree_data/'): os.mkdir('/tree_data/')
-            
-    all_wordnet_data = pd.DataFrame(columns=['ref_term','new_term', 
-                                             'role', 'synset', 
+
+    all_wordnet_data = pd.DataFrame(columns=['ref_term','new_term',
+                                             'role', 'synset',
                                              'Branch_fact', 'Num_senses'])
-    
-    if wordlist: 
-        for word in wordlist: 
+
+    if wordlist:
+        for word in wordlist:
             word_data = "wordnet_data_" + word + ".json"
 
             with open(word_data) as f:
@@ -294,10 +298,10 @@ def get_wordnet_data(wordlist,home):
             word_data_df = pd.DataFrame.from_dict(word_data_dict)
 
             all_wordnet_data = all_wordnet_data.append(word_data_df, ignore_index=True)
-        
+
         return all_wordnet_data
-        
-    else: 
+
+    else:
         print("No wordlist to process")
 
 
@@ -306,29 +310,29 @@ def get_wordnet_data(wordlist,home):
 
 def expandTree(wordlist):
     treeneighbors = {}
-    
+
     for word in wordlist:
         synsets = wn.synsets(word)
-        
+
         all_hyponyms = []
         all_hypernyms = []
-        
-        for synset in synsets: 
+
+        for synset in synsets:
             hyponyms = synset.hyponyms()
             hypernyms = synset.hypernyms()
 
             if hyponyms: hyponyms = [f.name() for f in hyponyms]
             if hypernyms: hypernyms = [f.name() for f in hypernyms]
-                
+
             all_hyponyms.extend(hyponyms)
-            
+
             all_hypernyms.extend(hypernyms)
 
-        neighbors = {'hyponyms':all_hyponyms, 'hypernyms':all_hypernyms, 
+        neighbors = {'hyponyms':all_hyponyms, 'hypernyms':all_hypernyms,
                      'substanceMeronyms':[], 'partMeronyms':[]}
-        
+
         treeneighbors[word] = neighbors
-        
+
     return treeneighbors
 
 
@@ -337,96 +341,95 @@ def expandTree(wordlist):
 
 def get_tree_structure(tree, home):
     os.chdir(home)
-    
-    tree_data = pd.DataFrame(columns=['ref_term','new_term', 'role', 'synset', 
+
+    tree_data = pd.DataFrame(columns=['ref_term','new_term', 'role', 'synset',
                                       'Branch_fact', 'Num_senses'])
-    
+
     for term in tree.keys():
         hyponyms = tree[term]['hyponyms']
         hypernyms = tree[term]['hypernyms']
         substanceMeronyms = tree[term]['substanceMeronyms']
         partMeronyms = tree[term]['partMeronyms']
-        
-        
-        for hypo in hyponyms: 
+
+
+        for hypo in hyponyms:
             hypo=wn.synset(hypo)
             new_term = [t.name() for t in hypo.lemmas()][0]
             term_branch = get_branching_factor([new_term])
             term_branch = term_branch[new_term]
-            row = {'ref_term': term, 'new_term': new_term, 'role': 'hyponym', 
-                   'synset': hypo, 'Branch_fact': term_branch, 
+            row = {'ref_term': term, 'new_term': new_term, 'role': 'hyponym',
+                   'synset': hypo, 'Branch_fact': term_branch,
                    'Num_senses': len(wn.synsets(new_term))}
-            
+
             tree_data = tree_data.append(row, ignore_index=True)
-            
-        for hyper in hypernyms: 
+
+        for hyper in hypernyms:
             hyper=wn.synset(hyper)
             new_term = [t.name() for t in hyper.lemmas()][0]
             term_branch = get_branching_factor([new_term])
             term_branch = term_branch[new_term]
-            row = {'ref_term': term, 'new_term': new_term, 'role': 'hypernym', 
-                   'synset': hyper, 
-                   'Branch_fact': term_branch, 
+            row = {'ref_term': term, 'new_term': new_term, 'role': 'hypernym',
+                   'synset': hyper,
+                   'Branch_fact': term_branch,
                    'Num_senses': len(wn.synsets(new_term))}
             tree_data = tree_data.append(row, ignore_index=True)
-        
-        for subst in substanceMeronyms: 
+
+        for subst in substanceMeronyms:
             subst=wn.synset(subst)
             new_term = [t.name() for t in subst.lemmas()][0]
             term_branch = get_branching_factor([new_term])
             term_branch = term_branch[new_term]
-            row = {'ref_term': term, 'new_term': new_term, 'role': 'substmeronym', 
-                   'synset': subst, 
-                   'Branch_fact': term_branch,  
+            row = {'ref_term': term, 'new_term': new_term, 'role': 'substmeronym',
+                   'synset': subst,
+                   'Branch_fact': term_branch,
                    'Num_senses': len(wn.synsets(new_term))}
             tree_data = tree_data.append(row, ignore_index=True)
-            
-        for part in partMeronyms: 
+
+        for part in partMeronyms:
             part=wn.synset(part)
             new_term = [t.name() for t in part.lemmas()][0]
             term_branch = get_branching_factor([new_term])
             term_branch = term_branch[new_term]
-            row = {'ref_term': term, 'new_term': new_term, 'role': 'partMeronyms', 
-                   'synset': part, 'Branch_fact': term_branch, 
+            row = {'ref_term': term, 'new_term': new_term, 'role': 'partMeronyms',
+                   'synset': part, 'Branch_fact': term_branch,
                    'Num_senses': len(wn.synsets(new_term))}
             tree_data = tree_data.append(row, ignore_index=True)
-        
-    new_searchterms = list(set(tree_data['new_term'].values)) 
+
+    new_searchterms = list(set(tree_data['new_term'].values))
     new_searchterms = [t.replace("_", " ") for t in new_searchterms]
-    
+
     tree_data_path= 'tree_data/'
     try: os.mkdir(tree_data_path)
     except: pass
-        
+
     os.chdir(tree_data_path)
-    
-    for term in tree.keys(): 
+
+    for term in tree.keys():
         tree_data_term = tree_data[tree_data['ref_term'] == term]
         tree_data_term.to_json(r'tree_data_' + term + '.json')
-    
+
     return tree_data, new_searchterms
 
 
 # In[14]:
 
 
-def get_wordnet_tree_data(wordlist, home, get_trees=True): 
-    
-    if get_trees: 
+def get_wordnet_tree_data(wordlist, home, get_trees=True):
+
+    if get_trees:
         try:
             tree = expandTree(wordlist) #get tree for wordlist
             tree_data, new_searchterms = get_tree_structure(tree, home) #org. and save tree data and get new terms
             final_wordlist = wordlist + new_searchterms
-            
+
             os.chdir(home)
             return final_wordlist, tree, tree_data
-        
-        except: 
+
+        except:
             os.chdir(home)
             print("No tree available")
             return wordlist, {}, {}
-    
-    else: 
+
+    else:
         os.chdir(home)
         return wordlist, {}, {}
-
