@@ -37,8 +37,21 @@ import gzip
 
 
 
+def get_webdriver(browser: str, executable_path: Optional[str]) -> webdriver:
 
-def settings(application_cred_name, driver_path):
+    try:
+        WebDriver = getattr(webdriver, browser)
+    except AttributeError as e:
+        raise Exception(f"no webdriver attribute called {browser}, try setting browser to 'Chrome' or 'Firefox'") from e
+
+    # optionally configure webdriver executable path, selenium will look in $PATH by default
+    if executable is None:
+        return WebDriver()
+    else:
+        return WebDriver(executable_path=executable_path)
+
+
+def settings(application_cred_name: str, driver_browser: str, driver_executable_path: str):
     #This client for the Google API needs to be set for the VISION classification
     #but it is not necessary for the selenium scaper for image downloading 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=application_cred_name
@@ -46,8 +59,7 @@ def settings(application_cred_name, driver_path):
 
     #See here for scraper details: 
     #https://towardsdatascience.com/image-scraping-with-python-a96feda8af2d
-    DRIVER_PATH =driver_path
-    wd = webdriver.Chrome(DRIVER_PATH) #incase you are chrome
+    wd = get_webdriver(browser=driver_browser, executable_path=driver_executable_path)
     wd.quit()
 
 
@@ -66,8 +78,8 @@ def fetch_image_urls(
     thumb_css: str = "img.Q4LuWd", 
     img_css: str = "img.n3VNCb", 
     load_page_css: str = ".mye4qd", 
-    sleep_between_interactions: int = 1
-):
+    sleep_between_interactions: float = 0.4
+) -> List[str]:
     
     def scroll_to_end(wd):
         wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -131,7 +143,7 @@ def fetch_image_urls(
 # In[4]:
 
 
-def persist_image(folder_path:str,url:str):
+def persist_image(folder_path: str, url: str) -> None:
     try:
         image_content = requests.get(url).content
 
@@ -155,15 +167,22 @@ def persist_image(folder_path:str,url:str):
 # In[5]:
 
 
-def search_and_download(search_term:str,driver_path:str,home, target_path='./downloads',
-                        number_images=5,sleep_time=0.4):
+def search_and_download(
+    search_term:str,
+    home: str, 
+    driver_browser: str,
+    driver_executable_path: str,
+    target_path: str = './downloads',
+    number_images: int = 5,
+    sleep_time: float = 0.4
+) -> List[str]:
     
     target_folder = os.path.join(target_path, search_term)
 
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
 
-    with webdriver.Chrome(executable_path=driver_path) as wd:
+    with get_webdriver(browser=driver_browser, driver_executable_path=driver_executablepath) as wd:
         res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=sleep_time)
     
     for elem in res:
@@ -176,10 +195,10 @@ def search_and_download(search_term:str,driver_path:str,home, target_path='./dow
 
 
 # In[6]:
-def get_imgs(searchterms_list, home):
+def get_imgs(searchterms_list: List[str], home: str) -> Dict[str, List[str]]:
     os.chdir(home)
     
-    img_dict = {}
+    img_dict = dict()
     for term in searchterms_list:
         term_img_set = os.listdir('downloads/' + term)
         img_dict[term]=term_img_set
@@ -187,7 +206,7 @@ def get_imgs(searchterms_list, home):
 
 
 # In[7]:
-def run_google_vision(img_urls_dict):
+def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str, Any]]:
     print("Classifying Imgs. w. Google Vision API...")
     
     client = vision.ImageAnnotatorClient()
