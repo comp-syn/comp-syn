@@ -56,6 +56,7 @@ class ImageData():
             try:
                 img = self.load_rgb_image(fp, compress_dims=compress_dims)
             except ValueError:
+                print("error")
                 continue
             if img is not None:
                 imglist.append(img)
