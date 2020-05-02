@@ -44,7 +44,6 @@ class Visualisation():
         self.compressed_img_dict = self.image_analysis.compressed_img_dict
         self.jzazbz_dict = self.image_analysis.jzazbz_dict
         self.labels_list = self.image_analysis.labels_list
-        self.rgb_dict = self.image_analysis.rgb_dict
 
     def jzazbz_color_distribution(self, label, num_channels=3):
 
@@ -90,7 +89,7 @@ class Visualisation():
         self.rgb_vals_dist_dict = self.image_analysis.rgb_vals_dist_dict
 
         self.jzazbz_dist_dict = self.image_analysis.jzazbz_dist_dict
-        self.avg_rgb_dict = self.image_analysis.avg_rgb_dict
+        self.avg_rgb_vals_dict = self.image_analysis.avg_rgb_vals_dict
 
         avg_dist_dict = {}
         for label in self.labels_list:
@@ -119,15 +118,15 @@ class Visualisation():
         ax.set_zlabel(r'$J_z$', fontsize=20, labelpad=10)
 
         for word in np.array(self.labels_list)[labels==0]:
-            ax.scatter(self.avg_rgb_dict[word][1], self.avg_rgb_dict[word][2], self.avg_rgb_dict[word][0], 
+            ax.scatter(self.avg_rgb_vals_dict[word][1], self.avg_rgb_vals_dict[word][2], self.avg_rgb_vals_dict[word][0], 
                        c=1.65*np.mean(self.rgb_vals_dict[word],axis=0), label=word, s=30, marker='^')
 
         for word in np.array(self.labels_list)[labels==1]:
-            ax.scatter(self.avg_rgb_dict[word][1], self.avg_rgb_dict[word][2], self.avg_rgb_dict[word][0], 
+            ax.scatter(self.avg_rgb_vals_dict[word][1], self.avg_rgb_vals_dict[word][2], self.avg_rgb_vals_dict[word][0], 
                        c=1.65*np.mean(self.rgb_vals_dict[word],axis=0), label=word, s=30, marker='o')
 
         for word in np.array(self.labels_list)[labels==2]:
-            ax.scatter(self.avg_rgb_dict[word][1], self.avg_rgb_dict[word][2], self.avg_rgb_dict[word][0], 
+            ax.scatter(self.avg_rgb_vals_dict[word][1], self.avg_rgb_vals_dict[word][2], self.avg_rgb_vals_dict[word][0], 
                        c=1.65*np.mean(self.rgb_vals_dict[word],axis=0), label=word, s=30, marker='x')
 
         semantic_domain = 'Test_Words'
@@ -239,4 +238,25 @@ class Visualisation():
         plt.savefig('Figures/tSNE_all_colorgram.pdf')
         plt.show()
 
+    
+    def plot_word_colors(self, word_distance=0.2):
 
+        word_colors = {}
+        for word in self.rgb_vals_dict:
+            word_colors[word] = 1.65*np.mean(self.rgb_vals_dict[word], axis=0)
+
+        fig = plt.figure()
+        ax = fig.add_axes([0,0,1,1])
+        # a sort of hack to make sure the words are well spaced out.
+        word_pos = 1/len(self.rgb_vals_dict)
+        # use matplotlib to plot words
+        for word in word_colors:
+            ax.text(word_pos, 0.8, word,
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    fontsize=20, color=word_colors[word],  # choose just the most likely topic
+                    transform=ax.transAxes)
+            word_pos += word_distance # to move the word for the next iter
+
+        ax.set_axis_off()
+        plt.show()

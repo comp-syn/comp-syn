@@ -32,8 +32,10 @@ class ImageAnalysis():
         self.rgb_vals_dict = image_data.rgb_vals_dict
         self.rgb_vals_dist_dict = image_data.rgb_vals_dist_dict
     # @jit
-    def compute_color_distributions(self, labels, color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36, num_bins=8, num_channels=3):
+    def compute_color_distributions(self, labels="default", color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36, num_bins=8, num_channels=3):
         dims = self.image_data.dims
+        if labels == "default":
+            labels = self.labels_list
         labels = labels if isinstance(labels, list) else [labels]
         self.jzazbz_dist_dict, self.hsv_dist_dict = {}, {}
         self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
@@ -63,7 +65,7 @@ class ImageAnalysis():
                 if key not in self.image_data.labels_list:
                     print("\nlabel {} does not exist".format(key))
                     continue
-                imageset = self.rgb_dict[key]
+                imageset = self.rgb_vals_dict[key]
                 dist_array, h, s, v = [], [], [], []
                 for i in range(len(imageset)):
                     hsv_array = mplcolors.rgb_to_hsv(imageset[i]/255.)
@@ -100,20 +102,20 @@ class ImageAnalysis():
     # @jit
     def cross_entropy_between_images(self, symmetrized=True):
         #needswork
-        rgb_dict = self.image_data.rgb_dict
+        rgb_vals_dict = self.image_data.rgb_vals_dict
         entropy_dict = {}
         entropy_dict_js = {}
-        for key in rgb_dict:
+        for key in rgb_vals_dict:
             entropy_array = []
             entropy_array_js = []
-            for i in range(len(rgb_dict[key])):
-                for j in range(len(rgb_dict[key])):
+            for i in range(len(rgb_vals_dict[key])):
+                for j in range(len(rgb_vals_dict[key])):
                     if symmetrized == True:
-                        mean = (rgb_dict[key][i] + rgb_dict[key][j])/2.
-                        entropy_array.append((scipy.stats.entropy(rgb_dict[key][i],rgb_dict[key][j])+scipy.stats.entropy(rgb_dict[key][j],rgb_dict[key][i]))/2.)
-                        entropy_array_js.append((scipy.stats.entropy(rgb_dict[key][i],mean) + scipy.stats.entropy(rgb_dict[key][j],mean))/2.)
+                        mean = (rgb_vals_dict[key][i] + rgb_vals_dict[key][j])/2.
+                        entropy_array.append((scipy.stats.entropy(rgb_vals_dict[key][i],rgb_vals_dict[key][j])+scipy.stats.entropy(rgb_vals_dict[key][j],rgb_vals_dict[key][i]))/2.)
+                        entropy_array_js.append((scipy.stats.entropy(rgb_vals_dict[key][i],mean) + scipy.stats.entropy(rgb_vals_dict[key][j],mean))/2.)
                     else:
-                        entropy_array.append(scipy.stats.entropy(rgb_dict[key][i],rgb_dict[key][j]))
+                        entropy_array.append(scipy.stats.entropy(rgb_vals_dict[key][i],rgb_vals_dict[key][j]))
             entropy_dict[key] = entropy_array
             entropy_dict_js[key] = entropy_array_js
         
@@ -188,15 +190,15 @@ class ImageAnalysis():
 
     # @jit
     def compress_color_data(self):
-        avg_rgb_dict = {} #dictionary of average color coordinates
+        avg_rgb_vals_dict = {} #dictionary of average color coordinates
         for label in self.labels_list:
             try:
                 avg_rgb = np.mean(np.mean(np.mean(self.jzazbz_dict[label],axis=0),axis=0),axis=0)
-                avg_rgb_dict[label] = avg_rgb
+                avg_rgb_vals_dict[label] = avg_rgb
             except:
                 print(label + " failed")
                 pass
-        self.avg_rgb_dict = avg_rgb_dict
+        self.avg_rgb_vals_dict = avg_rgb_vals_dict
 
         jzazbz_dict_simp = {}
         for label in self.labels_list:
@@ -241,3 +243,27 @@ class ImageAnalysis():
             for img in self.compressed_img_dict:
                 colorgram = PIL.Image.fromarray(self.compressed_img_dict[img].astype(np.uint8))
                 colorgram.save(os.path.join("colorgrams", img + "_colorgram.png"))
+
+
+    def plot_word_colors(self):
+
+        word_colors = {}
+        for word in self.rgb_vals_dict:
+            word_colors[word] = 1.65*np.mean(self.rgb_vals_dict[word], axis=0)
+
+        fig = plt.figure()
+        ax = fig.add_axes([0,0,1,1])
+        # a sort of hack to make sure the words are well spaced out.
+        word_pos = 1/len(self.rgb_vals_dict)
+        # use matplotlib to plot words
+        for word in word_colors:
+            ax.text(word_pos, 0.8, word,
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    fontsize=20, color=word_colors[word],  # choose just the most likely topic
+                    transform=ax.transAxes)
+            word_pos += 0.2 # to move the word for the next iter
+
+        ax.set_axis_off()
+        plt.show()
+
