@@ -39,5 +39,5 @@ Dependencies
 Notes
 ~~~~~
 
-To use the package one would need to download the JzAzBz array to convert the images to the appropriate vector form. It can be downloaded here (link). We provide sample images downloaded from Google Images to test the functionality.
+To use the package one would need to download the JzAzBz array to convert the images to the appropriate vector form. It can be downloaded here (`link <https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view>`_). We provide sample images downloaded from Google Images to test the functionality.
 

@@ -73,7 +73,7 @@ def fuzzy_sleep(min_time: int) -> None:
 
 def fetch_image_urls(
     query: str, 
-    max_links_to_fetch: int, 
+    number_of_links_to_fetch: int, 
     wd: webdriver, 
     thumb_css: str = "img.Q4LuWd", 
     img_css: str = "img.n3VNCb", 
@@ -81,6 +81,17 @@ def fetch_image_urls(
     sleep_between_interactions: float = 0.4
 ) -> List[str]:
     
+    """
+        Scrape all image urls from Google for search term 'query'. The script continues to load new 
+        Google search pages as needed until number_of_links_to_fetch is reached.
+        query: term to search in Google
+        number_of_links_to_fetch: number of links to download from Google for query
+        wd: path to the webdriver for selenium (Chrome or Firefox)
+        thumb_css, img_css, load_page_css: css tags to identify IMG urls 
+        sleep_between_interactions: sleep behavior to avoid red flags with Google. 
+            Fuzzy sleep randomly varies sleep intervals to emulate human users. 
+    """
+        
     def scroll_to_end(wd):
         wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         fuzzy_sleep(sleep_between_interactions)    
@@ -95,7 +106,7 @@ def fetch_image_urls(
     image_count = 0
     results_start = 0
 
-    while image_count < max_links_to_fetch:
+    while image_count < number_of_links_to_fetch:
         
         scroll_to_end(wd)
         thumbnail_results = wd.find_elements_by_css_selector(thumb_css) # get all image thumbnail results
@@ -121,7 +132,7 @@ def fetch_image_urls(
                 if actual_image.get_attribute('src') and 'http' in actual_image.get_attribute('src'):
                     image_urls.add(actual_image.get_attribute('src'))
                     image_count += 1
-                    if image_count >= max_links_to_fetch:
+                    if image_count >= number_of_links_to_fetch:
                         print(f"Found: {image_count} image links, done!")
                         return image_urls
 
@@ -133,7 +144,7 @@ def fetch_image_urls(
                 wd.execute_script(f"document.querySelector('{load_page_css}').click();")
             else:
                 print(
-                    f"WARNING: {image_count}/{max_links_to_fetch} images gathered, but no 'load_more_button' found with the selector '{load_page_css}', returning what we have so far"
+                    f"WARNING: {image_count}/{number_of_links_to_fetch} images gathered, but no 'load_more_button' found with the selector '{load_page_css}', returning what we have so far"
                 )
                 return image_urls
 
@@ -143,7 +154,14 @@ def fetch_image_urls(
 # In[4]:
 
 
-def persist_image(folder_path: str, url: str) -> None:
+def save_image(folder_path:str,url:str) -> None:
+    
+    """
+        Try to download the image correspond to the url scraped from the function, fetch_image_urls. 
+        folder_path: file location for saving images 
+        url: image url to download image from 
+    """
+        
     try:
         image_content = requests.get(url).content
 
@@ -166,47 +184,58 @@ def persist_image(folder_path: str, url: str) -> None:
 
 # In[5]:
 
-
 def search_and_download(
     search_term:str,
-    home: str, 
     driver_browser: str,
+    home: str, 
     driver_executable_path: str,
     target_path: str = './downloads',
     number_images: int = 5,
     sleep_time: float = 0.4
 ) -> List[str]:
     
+    """
+       Scrape and save images from Google using selenium to automate Google search. Save the raw images 
+       collected into the folder, './downloads'. number_images determines the number of images to 
+       collect for each search term.    
+       
+       search_term: term to use in Google query 
+       driver_path: path to the webdriver for selenium (Chrome or Firefox)
+       home: path to home directory of notebook
+       target_path: file location to save images 
+       number_images: number of images to download for each query
+       sleep_time: general rate of sleep activity (lower values raise red flags for Google)
+    """
+        
     target_folder = os.path.join(target_path, search_term)
 
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
 
     with get_webdriver(browser=driver_browser, driver_executable_path=driver_executablepath) as wd:
-        res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=sleep_time)
+        urls = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=sleep_time)
     
-    for elem in res:
-        persist_image(target_folder,elem)
+    for url in urls:
+        save_image(target_folder,url)
     
     wd.quit()
     os.chdir(home)
     
-    return res
-
-
-# In[6]:
-def get_imgs(searchterms_list: List[str], home: str) -> Dict[str, List[str]]:
-    os.chdir(home)
-    
-    img_dict = dict()
-    for term in searchterms_list:
-        term_img_set = os.listdir('downloads/' + term)
-        img_dict[term]=term_img_set
-    return img_dict
+    return urls
 
 
 # In[7]:
+
 def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str, Any]]:
+    
+    """
+       Use the Google vision API to return a set of classification labels for each image collected from 
+       Google using the search_and_download function. Each label assigned by Google vision is associated 
+       with a score indicating Google's confidence in the fit fo the label for the image.
+       
+       img_urls_dict: dictionary containing image_urls
+    """
+        
     print("Classifying Imgs. w. Google Vision API...")
     
     client = vision.ImageAnnotatorClient()
@@ -214,7 +243,6 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
     
     for search_term in img_urls_dict.keys(): 
         img_urls = img_urls_dict[search_term]
-    
         img_classified_dict = {}
         img_classified_dict[search_term] = {}
         
@@ -234,18 +262,24 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
 
 
 # In[8]:
-
-
 def write_to_json(to_save, filename):
+    """ add and write dictionary to existing json file"""
     with open(filename, 'a') as to_write_to:
         json.dump(to_save, to_write_to, indent=4)
 
 
 # In[9]:
-
-
 def write_img_classifications_to_file(home, search_terms, img_classified_dict):
-    
+
+    """
+       Store Google vision's classifications for images in a json file, which can then be retrieved for 
+       the purposes of filtering and also statistical analyses.  
+       
+       home: home directory of notebook
+       search_terms: terms used for querying Google
+       img_classified_dict: dictionary of image URLs and classifications from Google Vision
+    """
+        
     os.chdir(home + "/image_classifications")
     
     for term in search_terms:
@@ -273,60 +307,44 @@ def write_img_classifications_to_file(home, search_terms, img_classified_dict):
 
 
 # In[10]:
+def get_branching_factor(search_terms):
 
-
-def get_branching_factor(wordlist):
-
+    """
+    Query WordNet to retrieve the branching factor for each search term. The default setting is to 
+    retrieve the branching factor associated with each term's primary definition in WordNet. If a term 
+    is polysemous and has multiple meanings, then the specific synset (i.e. WordNet definition) for this 
+    term will need to be manually retrieved. Branching factor is the number of subsets a term indexes 
+    plus 1, such that terms with no branches have a branching factor of 1. 
+    """
+        
     branching_dict={}
     
-    for word in wordlist:  
+    for term in search_terms:  
         
         try: 
-            wordsyn = wn.synsets(word)[0]
+            wordsyn = wn.synsets(term)[0]
             branches = set([i for i in wordsyn.closure(lambda s:s.hyponyms())])
             branching_factor = len(branches)+1 #1 for the node itself 
-            branching_dict[word] = branching_factor
+            branching_dict[term] = branching_factor
         except: 
-            branching_dict[word] = 0
+            branching_dict[term] = 0
         
     return branching_dict  
 
 
-# In[11]:
-
-
-def get_wordnet_data(wordlist,home):
-    os.chdir(home)
-    if not os.path.isdir('/tree_data/'): os.mkdir('/tree_data/')
-            
-    all_wordnet_data = pd.DataFrame(columns=['ref_term','new_term', 
-                                             'role', 'synset', 
-                                             'Branch_fact', 'Num_senses'])
-    
-    if wordlist: 
-        for word in wordlist: 
-            word_data = "wordnet_data_" + word + ".json"
-
-            with open(word_data) as f:
-                word_data_dict = json.load(f)
-
-            word_data_df = pd.DataFrame.from_dict(word_data_dict)
-
-            all_wordnet_data = all_wordnet_data.append(word_data_df, ignore_index=True)
-        
-        return all_wordnet_data
-        
-    else: 
-        print("No wordlist to process")
-
-
 # In[12]:
-
-
-def expandTree(wordlist):
+def expandTree(search_terms):
+ 
+    """
+    Query WordNet to retrieve the full taxonomic tree associated with each search term. Hypernyms are 
+    the supersets for a search term (i.e. the more general classes its a part of); Hyponyms are the 
+    subsets for a search term (i.e. its branches in the tree); meronyms indicate part-whole relations 
+    and associations, via synecdoche and metonymy.  
+    """
+    
     treeneighbors = {}
     
-    for word in wordlist:
+    for word in search_terms:
         synsets = wn.synsets(word)
         
         all_hyponyms = []
@@ -352,9 +370,21 @@ def expandTree(wordlist):
 
 
 # In[13]:
-
-
 def get_tree_structure(tree, home):
+    
+    """
+    Query WordNet to retrieve various properties of each search term.
+    ref_term indicates the term used to retrieve a new term from WordNet. 
+    new_term indicates the new term retrieved from WordNet as part of another term's taxonomic tree. 
+    role indicates the part of speech of the new term.
+    synset indicates the meaning (sense) of the new term according to WordNet.
+    Branch_fact indicates the branching factor of the new term in WordNet.
+    Num_senses indicates how polysemous the new term is in WordNet, based on how many meanings it is 
+    linked to in WordNet. 
+    
+    Tree: dictionary of search terms and their corresponding parents and children in WordNet's taxonomy
+    """
+        
     os.chdir(home)
     
     tree_data = pd.DataFrame(columns=['ref_term','new_term', 'role', 'synset', 
@@ -429,13 +459,21 @@ def get_tree_structure(tree, home):
 # In[14]:
 
 
-def get_wordnet_tree_data(wordlist, home, get_trees=True): 
+def get_wordnet_tree_data(search_terms, home, get_trees=True): 
     
+    """
+    Use get_tree_structure to collect new terms from the taxonomic trees associated with each search 
+    term provided as input. 
+    
+    home: home directory of notebook
+    If get_trees = False, then return original search_term list
+    """
+        
     if get_trees: 
         try:
-            tree = expandTree(wordlist) #get tree for wordlist
-            tree_data, new_searchterms = get_tree_structure(tree, home) #org. and save tree data and get new terms
-            final_wordlist = wordlist + new_searchterms
+            tree = expandTree(search_terms) #get tree for wordlist
+            tree_data, new_searchterms = get_tree_structure(tree, home) 
+            final_wordlist = search_terms + new_searchterms
             
             os.chdir(home)
             return final_wordlist, tree, tree_data
