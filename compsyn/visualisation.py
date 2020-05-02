@@ -239,7 +239,7 @@ class Visualisation():
         plt.show()
 
     
-    def plot_word_colors(self, word_distance=0.2):
+    def plot_word_colors(self, word_distance=0.2, size=25, save=True):
 
         word_colors = {}
         for word in self.rgb_vals_dict:
@@ -254,9 +254,11 @@ class Visualisation():
             ax.text(word_pos, 0.8, word,
                     horizontalalignment='center',
                     verticalalignment='center',
-                    fontsize=20, color=word_colors[word],  # choose just the most likely topic
+                    fontsize=size, color=word_colors[word],  # choose just the most likely topic
                     transform=ax.transAxes)
             word_pos += word_distance # to move the word for the next iter
 
         ax.set_axis_off()
+        if save:
+            plt.savefig("word_colors.png")
         plt.show()
