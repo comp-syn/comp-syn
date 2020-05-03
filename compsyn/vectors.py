@@ -25,11 +25,11 @@ class Vector():
 		self.color_val = (1.65*np.mean(img_analysis.rgb_vals_dict[word], axis=0))
 		self.colorgram = PIL.Image.fromarray(img_analysis.compressed_img_dict[word].astype(np.uint8))
 
-	def print_word_color(self):
+	def print_word_color(self, size=30):
 
 		fig = plt.figure()
 		ax = fig.add_axes([0,0,1,1])
 
-		plt.text(0.35, 0.5, self.word, color=self.color_val, fontsize=30)
+		plt.text(0.35, 0.5, self.word, color=self.color_val, fontsize=size)
 		ax.set_axis_off()
 		plt.show()
