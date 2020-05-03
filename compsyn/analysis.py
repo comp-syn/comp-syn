@@ -11,14 +11,38 @@ import PIL
 
 
 def kl_divergence(dist1, dist2, symmetrized=True):
+	"""
+    Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
+​
+	Args:
+		dist1 (array): first distribution
+ 		dist2 (array): second distribution
+		symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
+​
+    Returns:
+		kl (float): (symmetrized) KL divergence
+    """
     if symmetrized==True:
-        return (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
+    	kl = (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
+        return kl
     else:
-        return scipy.stats.entropy(dist1,dist2)
+    	kl = scipy.stats.entropy(dist1,dist2)
+        return kl
 
 def js_divergence(dist1, dist2):
+	"""
+    Calculates Jensen-Shannon (JS) divergence between two distributions
+​
+	Args:
+		dist1 (array): first distribution
+ 		dist2 (array): second distribution
+​
+    Returns:
+		js (float): JS divergence
+    """
     mean_dist = (dist1 + dist2)/2.
-    return (scipy.stats.entropy(dist1, mean_dist) + scipy.stats.entropy(dist2, mean_dist))/2.
+    js = (scipy.stats.entropy(dist1, mean_dist) + scipy.stats.entropy(dist2, mean_dist))/2.
+    return js
 
 
 class ImageAnalysis():
@@ -32,7 +56,29 @@ class ImageAnalysis():
         self.rgb_vals_dict = image_data.rgb_vals_dict
         self.rgb_vals_dist_dict = image_data.rgb_vals_dist_dict
     # @jit
-    def compute_color_distributions(self, labels="default", color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36, num_bins=8, num_channels=3):
+    def compute_color_distributions(self, labels="default", color_rep=['jzazbz', 'hsv', 'rgb'], 
+    	spacing=36, num_bins=8, num_channels=3,
+    	Jz_min=0., Jz_max=0.167,
+    	Az_min=-0.1,Az_max=0.11,
+    	Bz_min=-0.156,Bz_max=0.115,
+    	h_max=360,rgb_max=255):
+    	"""
+    	Calculates color distributions for each word in a dictionary
+​
+		Args:
+			self (class instance): ImageAnalysis class instance
+ 			labels (string): if "default" grabs dictionary keys as labels
+ 			color_rep(array): colorspaces to calculate distributions in
+ 			spacing(int): hue spacing for HSV distribution (in degrees)
+ 			num_bins(int): number of bins to calculate 3D distributions in
+ 			num_channels(int): number of color channels
+ 			*z_min (*z_max) (float): minimum (maximum) of JzAzBz coordinates
+ 			h_max (int): maximum hue (in degrees)
+ 			rgb_max (int): maximum value in RGB
+​
+    	Returns:
+			self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
+    	"""
         dims = self.image_data.dims
         if labels == "default":
             labels = self.labels_list
@@ -54,8 +100,9 @@ class ImageAnalysis():
                 for i in range(len(imageset)):
                     jzazbz.append(imageset[i])
                     dist = np.ravel(np.histogramdd(np.reshape(imageset[i][:,:,:],(dims[0]*dims[1],num_channels)),
-                                          bins=(np.linspace(0,0.167,1+int(num_bins**(1./num_channels))),np.linspace(-0.1,0.11,1+int(num_bins**(1./num_channels))),
-                                               np.linspace(-0.156,0.115,1+int(num_bins**(1./num_channels)))), density=True)[0])
+                                          bins=(np.linspace(Jz_min,Jz_max,1+int(num_bins**(1./num_channels))),
+                                          		np.linspace(Az_min,Az_max,1+int(num_bins**(1./num_channels))),
+                                                np.linspace(Bz_min,Bz_max,1+int(num_bins**(1./num_channels)))), density=True)[0])
                     dist_array.append(dist)
                 self.jzazbz_dist_dict[key] = dist_array
         if 'hsv' in color_rep:
@@ -68,9 +115,9 @@ class ImageAnalysis():
                 imageset = self.rgb_vals_dict[key]
                 dist_array, h, s, v = [], [], [], []
                 for i in range(len(imageset)):
-                    hsv_array = mplcolors.rgb_to_hsv(imageset[i]/255.)
-                    dist = np.histogram(360.*np.ravel(hsv_array[:,:,0]),
-                                        bins=np.arange(0,360+spacing,spacing),
+                    hsv_array = mplcolors.rgb_to_hsv(imageset[i]/(1.*rgb_max))
+                    dist = np.histogram(1.*h_max*np.ravel(hsv_array[:,:,0]),
+                                        bins=np.arange(0,h_max+spacing,spacing),
                                         density=True)[0]
                     dist_array.append(dist)
                     h.append(np.mean(np.ravel(hsv_array[:,:,0])))
@@ -94,12 +141,13 @@ class ImageAnalysis():
                     tot = 1.*r+g+b
                     rgb.append([r/tot,g/tot,b/tot])
                     dist = np.ravel(np.histogramdd(np.reshape(imageset[i],(dims[0]*dims[1],num_channels)),
-                                          bins=(np.linspace(0,255,1+int(num_bins**(1./num_channels))),np.linspace(0,255,1+int(num_bins**(1./num_channels))),
-                                               np.linspace(0,255,1+int(num_bins**(1./num_channels)))), density=True)[0])
+                                          bins=(np.linspace(0,rgb_max,1+int(num_bins**(1./num_channels))),
+                                          	    np.linspace(0,rgb_max,1+int(num_bins**(1./num_channels))),
+                                                np.linspace(0,rgb_max,1+int(num_bins**(1./num_channels)))), density=True)[0])
                     dist_array.append(dist)
                 self.rgb_ratio_dict[key] = rgb
                 self.rgb_dist_dict[key] = dist_array
-    # @jit
+
     def cross_entropy_between_images(self, symmetrized=True):
         #needswork
         rgb_vals_dict = self.image_data.rgb_vals_dict
@@ -123,7 +171,6 @@ class ImageAnalysis():
         self.entropy_dict_js = entropy_dict_js
         return entropy_dict, entropy_dict_js
 
-    # @jit
     def cross_entropy_between_labels(self, symmetrized=True):
         color_dict = self.jzazbz_dist_dict
         words = self.labels_list
@@ -168,7 +215,6 @@ class ImageAnalysis():
         self.cross_entropy_between_labels_dict_js = labels_entropy_dict_js
         self.cross_entropy_matrix_js = color_sym_matrix_js
 
-    # @jit
     def cross_entropy_between_all_images(color_dict, words):
         entropy_dict_all = {}
         color_sym_matrix_js = []
@@ -188,7 +234,6 @@ class ImageAnalysis():
             color_sym_matrix_js.append(row_js)
         return entropy_dict_all, color_sym_matrix_js
 
-    # @jit
     def compress_color_data(self):
         avg_rgb_vals_dict = {} #dictionary of average color coordinates
         for label in self.labels_list:
@@ -249,7 +294,7 @@ class ImageAnalysis():
 
         word_colors = {}
         for word in self.rgb_vals_dict:
-            word_colors[word] = 1.65*np.mean(self.rgb_vals_dict[word], axis=0)
+            word_colors[word] = np.mean(self.rgb_vals_dict[word], axis=0)
 
         fig = plt.figure()
         ax = fig.add_axes([0,0,1,1])
@@ -267,3 +312,4 @@ class ImageAnalysis():
         ax.set_axis_off()
         plt.show()
 
+        
