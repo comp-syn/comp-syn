@@ -1,43 +1,50 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
+from __future__ import annotations
+import datetime
+import gzip
+import hashlib
+import io 
+import json
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import pandas as pd
+import pickle
+import random
+import rapidjson
+import requests
 import time
 import urllib.request
-import datetime
-import os
-import json
-import rapidjson
-import io 
-import hashlib
-import requests
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from PIL import Image
-from random_word import RandomWords
-from nltk.corpus import wordnet as wn
-import random
-import pandas as pd
-from textblob import Word
-from textblob.wordnet import Synset
-import numpy as np
+from bs4 import BeautifulSoup
 from google.cloud import vision_v1p2beta1 as vision
 from google.protobuf.json_format import MessageToDict
 from google_images_download import google_images_download 
-import pickle
-import matplotlib.pyplot as plt
-from numba import jit
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from mpl_toolkits.mplot3d import Axes3D
+from nltk.corpus import wordnet as wn
+from numba import jit
+from random_word import RandomWords
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 from sklearn.manifold import TSNE
-import gzip
-
+from textblob import Word
+from textblob.wordnet import Synset
 
 
 def get_webdriver(browser: str, executable_path: Optional[str]) -> webdriver:
+    """
+        Flexible webdriver getter and configuration
+        
+        In:
+        browser: Browser name, will be taken as the webdriver attribute to be instantiated, i.e. webdriver.Browser
+        executable_path: Path to browser executable, optional. Default behaviour is to assume the executable will be in $PATH
+
+        Out:
+        webdriver: instantiated webdriver, can be used as a context manager.
+    """
 
     try:
         WebDriver = getattr(webdriver, browser)
@@ -51,7 +58,7 @@ def get_webdriver(browser: str, executable_path: Optional[str]) -> webdriver:
         return WebDriver(executable_path=executable_path)
 
 
-def settings(application_cred_name: str, driver_browser: str, driver_executable_path: str):
+def settings(application_cred_name: str, driver_browser: str, driver_executable_path: str) -> None:
     #This client for the Google API needs to be set for the VISION classification
     #but it is not necessary for the selenium scaper for image downloading 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=application_cred_name
@@ -151,8 +158,6 @@ def fetch_image_urls(
         # move the result startpoint further down
         results_start = len(thumbnail_results)
 
-# In[4]:
-
 
 def save_image(folder_path:str,url:str) -> None:
     
@@ -182,7 +187,6 @@ def save_image(folder_path:str,url:str) -> None:
         pass
 
 
-# In[5]:
 
 def search_and_download(
     search_term:str,
@@ -224,8 +228,6 @@ def search_and_download(
     return urls
 
 
-# In[7]:
-
 def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str, Any]]:
     
     """
@@ -261,15 +263,13 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
     return img_classified_dict
 
 
-# In[8]:
-def write_to_json(to_save, filename):
+def write_to_json(to_save: Dict[str, Any], filename: str) -> None:
     """ add and write dictionary to existing json file"""
     with open(filename, 'a') as to_write_to:
         json.dump(to_save, to_write_to, indent=4)
 
 
-# In[9]:
-def write_img_classifications_to_file(home, search_terms, img_classified_dict):
+def write_img_classifications_to_file(home: str, search_terms: List[str], img_classified_dict: Dict[str, Any]) -> None:
 
     """
        Store Google vision's classifications for images in a json file, which can then be retrieved for 
@@ -306,8 +306,7 @@ def write_img_classifications_to_file(home, search_terms, img_classified_dict):
     os.chdir(home)          
 
 
-# In[10]:
-def get_branching_factor(search_terms):
+def get_branching_factor(search_terms: List[str]) -> Dict[str, int]:
 
     """
     Query WordNet to retrieve the branching factor for each search term. The default setting is to 
@@ -332,8 +331,7 @@ def get_branching_factor(search_terms):
     return branching_dict  
 
 
-# In[12]:
-def expandTree(search_terms):
+def expandTree(search_terms: List[str]) -> Dict[str, Any]:
  
     """
     Query WordNet to retrieve the full taxonomic tree associated with each search term. Hypernyms are 
@@ -369,8 +367,7 @@ def expandTree(search_terms):
     return treeneighbors
 
 
-# In[13]:
-def get_tree_structure(tree, home):
+def get_tree_structure(tree: Dict[str, Any], home: str) -> Tuple[Dict[str, Any], List[str]]:
     
     """
     Query WordNet to retrieve various properties of each search term.
@@ -456,10 +453,8 @@ def get_tree_structure(tree, home):
     return tree_data, new_searchterms
 
 
-# In[14]:
 
-
-def get_wordnet_tree_data(search_terms, home, get_trees=True): 
+def get_wordnet_tree_data(search_terms: List[str], home: str, get_trees: bool = True) -> Tuple[List[str], Dict[str, Any], Dict[str, Any]]: 
     
     """
     Use get_tree_structure to collect new terms from the taxonomic trees associated with each search 
@@ -481,9 +476,9 @@ def get_wordnet_tree_data(search_terms, home, get_trees=True):
         except: 
             os.chdir(home)
             print("No tree available")
-            return wordlist, {}, {}
+            return wordlist, dict(), dict()
     
     else: 
         os.chdir(home)
-        return wordlist, {}, {}
+        return wordlist, dict(), dict()
 
