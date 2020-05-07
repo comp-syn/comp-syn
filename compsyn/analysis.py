@@ -52,9 +52,7 @@ class ImageAnalysis():
         self.jzazbz_dict = image_data.jzazbz_dict
         self.rgb_dict = image_data.rgb_dict
         self.labels_list = image_data.labels_list
-        # vals for vis
-        self.rgb_vals_dict = image_data.rgb_vals_dict
-        self.rgb_vals_dist_dict = image_data.rgb_vals_dist_dict
+        
     # @jit
     def compute_color_distributions(self, labels="default", color_rep=['jzazbz', 'hsv', 'rgb'], 
     	spacing=36, num_bins=8, num_channels=3,
@@ -112,7 +110,7 @@ class ImageAnalysis():
                 if key not in self.image_data.labels_list:
                     print("\nlabel {} does not exist".format(key))
                     continue
-                imageset = self.rgb_vals_dict[key]
+                imageset = self.rgb_dict[key]
                 dist_array, h, s, v = [], [], [], []
                 for i in range(len(imageset)):
                     hsv_array = mplcolors.rgb_to_hsv(imageset[i]/(1.*rgb_max))
@@ -125,6 +123,7 @@ class ImageAnalysis():
                     v.append(np.mean(np.ravel(hsv_array[:,:,2])))
                 self.hsv_dist_dict[key] = dist_array
                 self.h_dict[key], self.s_dict[key], self.v_dict[key] = h, s, v
+
         if 'rgb' in color_rep:
             self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
             for key in labels:
@@ -293,13 +292,13 @@ class ImageAnalysis():
     def plot_word_colors(self):
 
         word_colors = {}
-        for word in self.rgb_vals_dict:
-            word_colors[word] = np.mean(self.rgb_vals_dict[word], axis=0)
+        for word in self.rgb_dict:
+            word_colors[word] = np.mean(self.rgb_dict[word], axis=0)
 
         fig = plt.figure()
         ax = fig.add_axes([0,0,1,1])
         # a sort of hack to make sure the words are well spaced out.
-        word_pos = 1/len(self.rgb_vals_dict)
+        word_pos = 1/len(self.rgb_dict)
         # use matplotlib to plot words
         for word in word_colors:
             ax.text(word_pos, 0.8, word,
