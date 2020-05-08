@@ -22,7 +22,7 @@ class Vector():
 		self.rgb_vector = np.mean(img_analysis.rgb_vals_dict[word], axis=0)
 		self.rgb_dist = np.mean(img_analysis.rgb_vals_dist_dict[word], axis=0)
 
-		self.color_val = (1.65*np.mean(img_analysis.rgb_vals_dict[word], axis=0))
+		self.color_val = (np.mean(img_analysis.rgb_vals_dict[word], axis=0))
 		self.colorgram = PIL.Image.fromarray(img_analysis.compressed_img_dict[word].astype(np.uint8))
 
 	def print_word_color(self, size=30):

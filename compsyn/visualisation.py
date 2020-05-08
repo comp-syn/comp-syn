@@ -241,7 +241,7 @@ class Visualisation():
 
         word_colors = {}
         for word in self.rgb_ratio_dict:
-            word_colors[word] = 1.65*np.mean(self.rgb_ratio_dict[word], axis=0)
+            word_colors[word] = np.mean(self.rgb_ratio_dict[word], axis=0)
 
         fig = plt.figure()
         ax = fig.add_axes([0,0,1,1])

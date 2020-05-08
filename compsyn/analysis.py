@@ -29,6 +29,7 @@ def kl_divergence(dist1, dist2, symmetrized=True):
     	kl = scipy.stats.entropy(dist1,dist2)
         return kl
 
+
 def js_divergence(dist1, dist2):
 	"""
     Calculates Jensen-Shannon (JS) divergence between two distributions
@@ -170,6 +171,7 @@ class ImageAnalysis():
         self.entropy_dict_js = entropy_dict_js
         return entropy_dict, entropy_dict_js
 
+
     def cross_entropy_between_labels(self, symmetrized=True):
         color_dict = self.jzazbz_dist_dict
         words = self.labels_list
@@ -214,6 +216,7 @@ class ImageAnalysis():
         self.cross_entropy_between_labels_dict_js = labels_entropy_dict_js
         self.cross_entropy_matrix_js = color_sym_matrix_js
 
+
     def cross_entropy_between_all_images(color_dict, words):
         entropy_dict_all = {}
         color_sym_matrix_js = []
@@ -233,6 +236,7 @@ class ImageAnalysis():
             color_sym_matrix_js.append(row_js)
         return entropy_dict_all, color_sym_matrix_js
 
+
     def compress_color_data(self):
         avg_rgb_vals_dict = {} #dictionary of average color coordinates
         for label in self.labels_list:
@@ -249,20 +253,6 @@ class ImageAnalysis():
             avg_jzazbz = np.mean(self.jzazbz_dist_dict[label], axis=0)
             jzazbz_dict_simp[label] = avg_jzazbz
         self.jzazbz_dict_simp = jzazbz_dict_simp 
-
-    # @jit
-    # def compress_img_array(self, img_array_dict, words, compress_dim=300):
-    #     compressed_img_array_dict = {}
-    #     for word in words:
-    #         print("Creating image array for " + word)
-    #         compressed_img_array = np.zeros((compress_dim, compress_dim,3))
-    #         for n in range(len(img_array_dict[word])):
-    #             if np.shape(img_array_dict[word][n]) == (compress_dim, compress_dim, 3):
-    #                 for i in range(compress_dim):
-    #                     for j in range(compress_dim):
-    #                         compressed_img_array[i][j] += img_array_dict[word][n][i][j]/(1.*len(img_array_dict[word]))
-    #         compressed_img_array_dict[word] = compressed_img_array
-    #     return compressed_img_array_dict
 
 
     def get_composite_image(self, labels=None, compress_dim=300, num_channels=3):
@@ -287,28 +277,5 @@ class ImageAnalysis():
             for img in self.compressed_img_dict:
                 colorgram = PIL.Image.fromarray(self.compressed_img_dict[img].astype(np.uint8))
                 colorgram.save(os.path.join("colorgrams", img + "_colorgram.png"))
-
-
-    def plot_word_colors(self):
-
-        word_colors = {}
-        for word in self.rgb_dict:
-            word_colors[word] = np.mean(self.rgb_ratio_dict[word], axis=0)
-
-        fig = plt.figure()
-        ax = fig.add_axes([0,0,1,1])
-        # a sort of hack to make sure the words are well spaced out.
-        word_pos = 1/len(self.rgb_ratio_dict)
-        # use matplotlib to plot words
-        for word in word_colors:
-            ax.text(word_pos, 0.8, word,
-                    horizontalalignment='center',
-                    verticalalignment='center',
-                    fontsize=20, color=word_colors[word],  # choose just the most likely topic
-                    transform=ax.transAxes)
-            word_pos += 0.2 # to move the word for the next iter
-
-        ax.set_axis_off()
-        plt.show()
 
         

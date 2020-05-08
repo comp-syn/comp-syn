@@ -66,6 +66,7 @@ class ImageData():
         self.rgb_dict[label] = imglist
         self.labels_list = list(self.rgb_dict.keys())
 
+
     def load_rgb_image(self, path, compress_dims=None):
         fmts = ['.jpg', '.jpeg', '.png', '.bmp']
         if os.path.isfile(path) and any([fmt in path.lower() for fmt in fmts]):
@@ -96,10 +97,9 @@ class ImageData():
                 except:
                     
                     pass
+                    
 
     def print_labels(self):
         self.labels_list = list(self.rgb_dict.keys())
         print(self.labels_list)
-
-
 
