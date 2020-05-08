@@ -110,7 +110,7 @@ class ImageAnalysis():
                 if key not in self.image_data.labels_list:
                     print("\nlabel {} does not exist".format(key))
                     continue
-                imageset = self.rgb_dict[key]
+                imageset = self.rgb_ratio_dict[key]
                 dist_array, h, s, v = [], [], [], []
                 for i in range(len(imageset)):
                     hsv_array = mplcolors.rgb_to_hsv(imageset[i]/(1.*rgb_max))
@@ -293,12 +293,12 @@ class ImageAnalysis():
 
         word_colors = {}
         for word in self.rgb_dict:
-            word_colors[word] = np.mean(self.rgb_dict[word], axis=0)
+            word_colors[word] = np.mean(self.rgb_ratio_dict[word], axis=0)
 
         fig = plt.figure()
         ax = fig.add_axes([0,0,1,1])
         # a sort of hack to make sure the words are well spaced out.
-        word_pos = 1/len(self.rgb_dict)
+        word_pos = 1/len(self.rgb_ratio_dict)
         # use matplotlib to plot words
         for word in word_colors:
             ax.text(word_pos, 0.8, word,
