@@ -160,8 +160,8 @@ class ImageAnalysis():
                 for j in range(len(rgb_vals_dict[key])):
                     if symmetrized == True:
                         mean = (rgb_vals_dict[key][i] + rgb_vals_dict[key][j])/2.
-                        entropy_array.append((scipy.stats.entropy(rgb_vals_dict[key][i],rgb_vals_dict[key][j])+scipy.stats.entropy(rgb_vals_dict[key][j],rgb_vals_dict[key][i]))/2.)
-                        entropy_array_js.append((scipy.stats.entropy(rgb_vals_dict[key][i],mean) + scipy.stats.entropy(rgb_vals_dict[key][j],mean))/2.)
+                        entropy_array.append(kl_divergence(rgb_vals_dict[key][i],rgb_vals_dict[key][j]))
+                        entropy_array.append(js_divergence(rgb_vals_dict[key][i],rgb_vals_dict[key][j]))
                     else:
                         entropy_array.append(scipy.stats.entropy(rgb_vals_dict[key][i],rgb_vals_dict[key][j]))
             entropy_dict[key] = entropy_array
@@ -180,6 +180,7 @@ class ImageAnalysis():
         for key in color_dict:
             mean_color_array = np.mean(np.array(color_dict[key]),axis=0)
             mean_color_dict[key] = mean_color_array
+
         labels_entropy_dict = {}
         labels_entropy_dict_js = {}
         color_sym_matrix = []
@@ -190,7 +191,6 @@ class ImageAnalysis():
             row_js = []
             for word2 in words:
                 if symmetrized == True:
-                    mean = (mean_color_dict[word1] + mean_color_dict[word2])/2.
                     entropy = kl_divergence(mean_color_dict[word1],mean_color_dict[word2], symmetrized)
                     entropy_js = js_divergence(mean_color_dict[word1], mean_color_dict[word2])
                 else:
@@ -227,11 +227,10 @@ class ImageAnalysis():
                 for i in range(len(color_dict[word1])):
                     for j in range(len(color_dict[word2])):
                         try:
-                            mean = (color_dict[word1][i] + color_dict[word2][j])/2.
-                            entropy_js.append(scipy.stats.entropy(color_dict[word1][i],mean) + scipy.stats.entropy(color_dict[word2][j],mean))/2.
+                            entropy_js.append(js_divergence(color_dict[word1][i],color_dict[word2][j]))
                         except:
                             entropy_js.append(np.mean(entropy_js))
-                entropy_dict_all[word1 + '_' + word2] = entropy_js
+                entropy_dict_all[word1+'_'+word2] = entropy_js
                 row_js.append(np.mean(entropy_js))
             color_sym_matrix_js.append(row_js)
         return entropy_dict_all, color_sym_matrix_js
