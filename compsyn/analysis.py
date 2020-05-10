@@ -8,7 +8,7 @@ import compsyn as cs
 from numba import jit
 import os
 import PIL
-
+import random
 
 class ImageAnalysis():
     def __init__(self, image_data):
@@ -21,23 +21,23 @@ class ImageAnalysis():
 
     def compute_color_distributions(self, labels="default", color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36, num_bins=8, num_channels=3, 
         Jz_min=0., Jz_max=0.167, Az_min=-0.1,Az_max=0.11, Bz_min=-0.156, Bz_max=0.115, h_max=360, rgb_max=255):
-    	"""
-    	Calculates color distributions for each word in a dictionary
-​
-		Args:
-			self (class instance): ImageAnalysis class instance
- 			labels (string): if "default" grabs dictionary keys as labels
- 			color_rep(array): colorspaces to calculate distributions in
- 			spacing(int): hue spacing for HSV distribution (in degrees)
- 			num_bins(int): number of bins to calculate 3D distributions in
- 			num_channels(int): number of color channels
- 			*z_min (*z_max) (float): minimum (maximum) of JzAzBz coordinates
- 			h_max (int): maximum hue (in degrees)
- 			rgb_max (int): maximum value in RGB
-​
-    	Returns:
-			self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
-    	"""
+        """
+        Calculates color distributions for each word in a dictionary
+        ​
+        Args:
+            self (class instance): ImageAnalysis class instance
+            labels (string): if "default" grabs dictionary keys as labels
+            color_rep(array): colorspaces to calculate distributions in
+            spacing(int): hue spacing for HSV distribution (in degrees)
+            num_bins(int): number of bins to calculate 3D distributions in
+            num_channels(int): number of color channels
+            *z_min (*z_max) (float): minimum (maximum) of JzAzBz coordinates
+            h_max (int): maximum hue (in degrees)
+            rgb_max (int): maximum value in RGB
+        ​
+        Returns:
+            self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
+        """
         dims = self.image_data.dims
         if labels == "default":
             labels = self.labels_list
@@ -109,27 +109,27 @@ class ImageAnalysis():
                 self.rgb_dist_dict[key] = dist_array
 
 
-    def kl_divergence(dist1, dist2, symmetrized=True):
-    """
-    Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
-​
-    Args:
-        dist1 (array): first distribution
-        dist2 (array): second distribution
-        symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
-​
-    Returns:
-        kl (float): (symmetrized) KL divergence
-    """
-    if symmetrized==True:
-        kl = (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
-        return kl
-    else:
-        kl = scipy.stats.entropy(dist1,dist2)
-        return kl
+    def kl_divergence(self, dist1, dist2, symmetrized=True):
+        """
+        Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
+    ​
+        Args:
+            dist1 (array): first distribution
+            dist2 (array): second distribution
+            symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
+    ​
+        Returns:
+            kl (float): (symmetrized) KL divergence
+        """
+        if symmetrized==True:
+            kl = (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
+            return kl
+        else:
+            kl = scipy.stats.entropy(dist1,dist2)
+            return kl
 
 
-    def js_divergence(dist1, dist2):
+    def js_divergence(self, dist1, dist2):
         """
         Calculates Jensen-Shannon (JS) divergence between two distributions
     ​
@@ -145,7 +145,7 @@ class ImageAnalysis():
         return js
 
 
-    def entropy_computations(self, between_labels=True, between_images=True, between_all_images=False):
+    def entropy_computations(self, between_labels=True, between_images=True, between_all_images=False, symmetrized=True):
         """
         Performs KL and JS divergence computations between aggregate color distributions for label pairs,
         between color distributions for image pairs (for a given label), and between color distributions
@@ -182,8 +182,8 @@ class ImageAnalysis():
                 row = []
                 row_js = []
                 for word2 in words:
-                    entropy_js = js_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0), np.mean(np.array(jzazbz_dist_dict[word2]),axis=0))
-                    entropy = kl_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),symmetrized)
+                    entropy_js = self.js_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0), np.mean(np.array(jzazbz_dist_dict[word2]),axis=0))
+                    entropy = self.kl_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),symmetrized)
                     row.append(entropy)
                     row_js.append(entropy_js)
                     #these lines are for convenience; if strings are correctly synced across all data they are not needed
@@ -212,8 +212,8 @@ class ImageAnalysis():
                 entropy_array_js = []
                 for i in range(len(jzazbz_dist_dict[key])):
                     for j in range(len(jzazbz_dist_dict[key])):
-                        entropy_array_js.append(js_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j]))
-                        entropy_array.append(kl_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j],symmetrized))
+                        entropy_array_js.append(self.js_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j]))
+                        entropy_array.append(self.kl_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j],symmetrized))
                 entropy_dict[key] = entropy_array
                 entropy_dict_js[key] = entropy_array_js
             
@@ -231,7 +231,7 @@ class ImageAnalysis():
                     for i in range(len(jzazbz_dist_dict[word1])):
                         for j in range(len(jzazbz_dist_dict[word2])):
                             try:
-                                entropy_js_all.append(js_divergence(jzazbz_dist_dict[word1][i],jzazbz_dist_dict[word2][j]))
+                                entropy_js_all.append(self.js_divergence(jzazbz_dist_dict[word1][i],jzazbz_dist_dict[word2][j]))
                             except:
                                 entropy_js_all.append(np.mean(entropy_js))
                     entropy_dict_all[word1+'_'+word2] = entropy_js_all
@@ -273,10 +273,9 @@ class ImageAnalysis():
             elif type(num_of_images) == int:
                 vectors = img_data[label]
                 if sample:
-                    index = np.random.choice(vectors.shape[0], num_of_images, replace=False)  
-                    vectors = vectors[index]
+                    vectors = random.sample(vectors, num_of_images)  
                 if reverse:
-                    np.flip(vectors, 0)
+                    vectors.reverse()
                 vectors = vectors[0:num_of_images]
                     
             compressed_img_dict[label] = np.zeros((compress_dim,compress_dim,num_channels))

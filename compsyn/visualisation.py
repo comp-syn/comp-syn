@@ -44,6 +44,7 @@ class Visualisation():
         self.compressed_img_dict = self.image_analysis.compressed_img_dict
         self.jzazbz_dict = self.image_analysis.jzazbz_dict
         self.labels_list = self.image_analysis.labels_list
+        self.rgb_ratio_dict = self.image_analysis.rgb_ratio_dict
 
     def jzazbz_color_distribution(self, label, num_channels=3):
 

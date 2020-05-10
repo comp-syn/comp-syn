@@ -20,15 +20,15 @@ class Vector():
 
 		self.rgb_vector = np.mean(img_analysis.rgb_dict[word], axis=0)
 		self.rgb_dist = np.mean(img_analysis.rgb_dist_dict[word], axis=0)
-		self.rgb_ratio = np.mean(img_analysis.rgb_ratio_dist_dict[word], axis=0)
+		self.rgb_ratio = np.mean(img_analysis.rgb_ratio_dict[word], axis=0)
 
 		self.colorgram = PIL.Image.fromarray(img_analysis.compressed_img_dict[word].astype(np.uint8))
 
-	def print_word_color(self, size=30):
+	def print_word_color(self, size=30, color_magnitude=1.65):
 
 		fig = plt.figure()
 		ax = fig.add_axes([0,0,1,1])
 
-		plt.text(0.35, 0.5, self.word, color=self.color_val, fontsize=size)
+		plt.text(0.35, 0.5, self.word, color=color_magnitude*pself.rgb_ratio, fontsize=size)
 		ax.set_axis_off()
 		plt.show()
