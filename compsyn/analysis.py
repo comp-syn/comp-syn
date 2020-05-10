@@ -255,15 +255,27 @@ class ImageAnalysis():
         self.jzazbz_dict_simp = jzazbz_dict_simp 
 
 
-    def get_composite_image(self, labels=None, compress_dim=300, num_channels=3):
+    def get_composite_image(self, labels=None, compress_dim=300, num_channels=3, num_of_images="all", sample=False, reverse=False):
         compressed_img_dict = {}
         img_data = self.image_data.rgb_dict
         if not labels:
             labels = img_data.keys()
         for label in labels:
             print(label + " is being compressed.")
+            total_images = len(img_data[label])
+            if num_of_images == "all":
+                vectors = img_data[label]
+            elif type(num_of_images) == int:
+                vectors = img_data[label]
+                if sample:
+                    index = np.random.choice(vectors.shape[0], num_of_images, replace=False)  
+                    vectors = vectors[index]
+                if reverse:
+                    np.flip(vectors, 0)
+                vectors = vectors[0:num_of_images]
+                    
             compressed_img_dict[label] = np.zeros((compress_dim,compress_dim,num_channels))
-            compressed_img_dict[label] = np.sum(img_data[label],axis=0)/(1.*len(img_data[label]))
+            compressed_img_dict[label] = np.sum(vectors ,axis=0)/(1.*len(vectors))
             
         self.compressed_img_dict = compressed_img_dict
         return compressed_img_dict
