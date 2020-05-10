@@ -19,10 +19,9 @@ class Vector():
 		self.jzazbz_dist = np.mean(img_analysis.jzazbz_dist_dict[word], axis=0)
 
 		self.rgb_vector = np.mean(img_analysis.rgb_dict[word], axis=0)
-		self.rgb_dist = np.mean(img_analysis.rgb_dist_dist_dict[word], axis=0)
+		self.rgb_dist = np.mean(img_analysis.rgb_dist_dict[word], axis=0)
 		self.rgb_ratio = np.mean(img_analysis.rgb_ratio_dist_dict[word], axis=0)
 
-		self.color_val = np.mean(img_analysis.rgb_vals_dict[word], axis=0)
 		self.colorgram = PIL.Image.fromarray(img_analysis.compressed_img_dict[word].astype(np.uint8))
 
 	def print_word_color(self, size=30):

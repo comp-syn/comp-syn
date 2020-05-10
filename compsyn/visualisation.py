@@ -85,7 +85,6 @@ class Visualisation():
 
     def plot_labels_in_space(self, n_clusters=2):
 
-        self.rgb_vals_dist_dict = self.image_analysis.rgb_vals_dist_dict
         self.jzazbz_dist_dict = self.image_analysis.jzazbz_dist_dict
         self.avg_rgb_vals_dict = self.image_analysis.avg_rgb_vals_dict
 
@@ -137,11 +136,12 @@ class Visualisation():
         plt.savefig('Figures/' + semantic_domain + '.png')
         plt.show()
 
-    def cluster_analysis(self):
 
-        self.cross_entropy_matrix_js = self.image_analysis.cross_entropy_matrix_js
+    def cluster_analysis(self, plot_colorbar=True):
 
-        D = np.log2(np.exp(np.matrix(self.cross_entropy_matrix_js)))
+        self.cross_entropy_between_labels_matrix_js = self.image_analysis.cross_entropy_between_labels_matrix_js
+
+        D = np.log2(np.exp(np.matrix(self.cross_entropy_between_labels_matrix_js)))
         condensedD = squareform(D)
 
         # Compute and plot first dendrogram.
@@ -188,14 +188,13 @@ class Visualisation():
         axmatrix.yaxis.tick_right()
         axmatrix.invert_yaxis()
 
-        #Plot colorbar (comment out for matrices without colorbar)
-        axcolor = fig.add_axes([1.1,0.1,0.02,0.6])
-        cbar = pylab.colorbar(im, cax=axcolor)
-        cbar.ax.set_yticks([0,0.005,0.01,0.015,0.02,0.025,0.03])
-        cbar.ax.set_yticklabels(['0','','0.01','','0.02','','0.03'],fontsize=12)
-        cbar.set_label('Jensen-Shannon Divergence [bits]', labelpad=26,rotation=270, fontsize=18)
+        if plot_colorbar:
+            axcolor = fig.add_axes([1.1,0.1,0.02,0.6])
+            cbar = pylab.colorbar(im, cax=axcolor)
+            cbar.ax.set_yticks([0,0.005,0.01,0.015,0.02,0.025,0.03])
+            cbar.ax.set_yticklabels(['0','','0.01','','0.02','','0.03'],fontsize=12)
+            cbar.set_label('Jensen-Shannon Divergence [bits]', labelpad=26,rotation=270, fontsize=18)
 
-        #Colorbars don't mesh well with saving as pdf
         semantic_domain = 'test'
         if not os.path.isdir('Figures/'): os.mkdir('Figures/')
         plt.savefig('Figures/' + semantic_domain + 'dendrogram.png')
@@ -260,3 +259,4 @@ class Visualisation():
         if save:
             plt.savefig("word_colors.png")
         plt.show()
+
