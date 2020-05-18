@@ -44,6 +44,7 @@ class Visualisation():
         self.compressed_img_dict = self.image_analysis.compressed_img_dict
         self.jzazbz_dict = self.image_analysis.jzazbz_dict
         self.labels_list = self.image_analysis.labels_list
+        self.rgb_ratio_dict = self.image_analysis.rgb_ratio_dict
 
     def jzazbz_color_distribution(self, label, num_channels=3):
 
@@ -85,9 +86,6 @@ class Visualisation():
 
     def plot_labels_in_space(self, n_clusters=2):
 
-        self.rgb_vals_dict = self.image_analysis.rgb_vals_dict
-        self.rgb_vals_dist_dict = self.image_analysis.rgb_vals_dist_dict
-
         self.jzazbz_dist_dict = self.image_analysis.jzazbz_dist_dict
         self.avg_rgb_vals_dict = self.image_analysis.avg_rgb_vals_dict
 
@@ -119,15 +117,15 @@ class Visualisation():
 
         for word in np.array(self.labels_list)[labels==0]:
             ax.scatter(self.avg_rgb_vals_dict[word][1], self.avg_rgb_vals_dict[word][2], self.avg_rgb_vals_dict[word][0], 
-                       c=1.65*np.mean(self.rgb_vals_dict[word],axis=0), label=word, s=30, marker='^')
+                       c=1.65*np.mean(self.rgb_ratio_dict[word],axis=0), label=word, s=30, marker='^')
 
         for word in np.array(self.labels_list)[labels==1]:
             ax.scatter(self.avg_rgb_vals_dict[word][1], self.avg_rgb_vals_dict[word][2], self.avg_rgb_vals_dict[word][0], 
-                       c=1.65*np.mean(self.rgb_vals_dict[word],axis=0), label=word, s=30, marker='o')
+                       c=1.65*np.mean(self.rgb_ratio_dict[word],axis=0), label=word, s=30, marker='o')
 
         for word in np.array(self.labels_list)[labels==2]:
             ax.scatter(self.avg_rgb_vals_dict[word][1], self.avg_rgb_vals_dict[word][2], self.avg_rgb_vals_dict[word][0], 
-                       c=1.65*np.mean(self.rgb_vals_dict[word],axis=0), label=word, s=30, marker='x')
+                       c=1.65*np.mean(self.rgb_ratio_dict[word],axis=0), label=word, s=30, marker='x')
 
         semantic_domain = 'Test_Words'
         ax.set_title(semantic_domain, fontsize=22, y=1.045)#, color=np.mean(rgblist[ind>0.75]/255, axis=0), y=1.045)
@@ -139,11 +137,12 @@ class Visualisation():
         plt.savefig('Figures/' + semantic_domain + '.png')
         plt.show()
 
-    def cluster_analysis(self):
 
-        self.cross_entropy_matrix_js = self.image_analysis.cross_entropy_matrix_js
+    def cluster_analysis(self, plot_colorbar=True):
 
-        D = np.log2(np.exp(np.matrix(self.cross_entropy_matrix_js)))
+        self.cross_entropy_between_labels_matrix_js = self.image_analysis.cross_entropy_between_labels_matrix_js
+
+        D = np.log2(np.exp(np.matrix(self.cross_entropy_between_labels_matrix_js)))
         condensedD = squareform(D)
 
         # Compute and plot first dendrogram.
@@ -190,14 +189,13 @@ class Visualisation():
         axmatrix.yaxis.tick_right()
         axmatrix.invert_yaxis()
 
-        #Plot colorbar (comment out for matrices without colorbar)
-        axcolor = fig.add_axes([1.1,0.1,0.02,0.6])
-        cbar = pylab.colorbar(im, cax=axcolor)
-        cbar.ax.set_yticks([0,0.005,0.01,0.015,0.02,0.025,0.03])
-        cbar.ax.set_yticklabels(['0','','0.01','','0.02','','0.03'],fontsize=12)
-        cbar.set_label('Jensen-Shannon Divergence [bits]', labelpad=26,rotation=270, fontsize=18)
+        if plot_colorbar:
+            axcolor = fig.add_axes([1.1,0.1,0.02,0.6])
+            cbar = pylab.colorbar(im, cax=axcolor)
+            cbar.ax.set_yticks([0,0.005,0.01,0.015,0.02,0.025,0.03])
+            cbar.ax.set_yticklabels(['0','','0.01','','0.02','','0.03'],fontsize=12)
+            cbar.set_label('Jensen-Shannon Divergence [bits]', labelpad=26,rotation=270, fontsize=18)
 
-        #Colorbars don't mesh well with saving as pdf
         semantic_domain = 'test'
         if not os.path.isdir('Figures/'): os.mkdir('Figures/')
         plt.savefig('Figures/' + semantic_domain + 'dendrogram.png')
@@ -242,13 +240,13 @@ class Visualisation():
     def plot_word_colors(self, word_distance=0.2, size=25, save=True):
 
         word_colors = {}
-        for word in self.rgb_vals_dict:
-            word_colors[word] = 1.65*np.mean(self.rgb_vals_dict[word], axis=0)
+        for word in self.rgb_ratio_dict:
+            word_colors[word] = np.mean(self.rgb_ratio_dict[word], axis=0)
 
         fig = plt.figure()
         ax = fig.add_axes([0,0,1,1])
         # a sort of hack to make sure the words are well spaced out.
-        word_pos = 1/len(self.rgb_vals_dict)
+        word_pos = 1/len(self.rgb_ratio_dict)
         # use matplotlib to plot words
         for word in word_colors:
             ax.text(word_pos, 0.8, word,
@@ -262,3 +260,4 @@ class Visualisation():
         if save:
             plt.savefig("word_colors.png")
         plt.show()
+
