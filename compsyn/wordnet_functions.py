@@ -1,14 +1,9 @@
 #Need to check imports carefully
 import json
-import rapidjson
-import io 
-import requests
-from random_word import RandomWords
+import os
 from nltk.corpus import wordnet as wn
 import random
 import pandas as pd
-from textblob import Word
-from textblob.wordnet import Synset
 
 from .logger import get_logger
 
