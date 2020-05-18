@@ -20,6 +20,8 @@ def get_logger(
         Wrapper for setting up and getting logger
     """
 
+    if not name.startswith("compsyn."):
+        name = "compsyn." + name
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
