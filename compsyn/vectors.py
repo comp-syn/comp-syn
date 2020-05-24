@@ -36,7 +36,7 @@ class Vector():
 		ax.set_axis_off()
 		plt.show()
 
-	def save_json_to_disk(self):
+	def save_vector_to_disk(self):
 
 		vector_properties = {}
 		vector_properties['jzazbz_vector'] = self.jzazbz_vector
