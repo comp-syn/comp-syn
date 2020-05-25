@@ -9,4 +9,5 @@ matplotlib.use('agg')
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-pytest.main(['-k-slow', '--cov=compsyn'])
+# pytest.main(['-k-slow', '--cov=compsyn'])
+pytest.main()
