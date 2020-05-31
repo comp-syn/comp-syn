@@ -13,6 +13,15 @@ test_jzazbz_array = np.load('jzazbz_array.npy')
 
 @jit
 def rgb_array_to_jzazbz_array(rgb_array):
+    """
+    Converts rgb pixel values to JzAzBz pixel values
+    ​
+    Args:
+        rgb_array (array): matrix of rgb pixel values
+    ​
+    Returns:
+        jzazbz_array (array): matrix of JzAzBz pixel values
+    """
     jzazbz_array = np.zeros(rgb_array.shape)
     for i in range(rgb_array.shape[0]):
         for j in range(rgb_array.shape[1]):

@@ -47,6 +47,9 @@ class Visualisation():
         self.rgb_ratio_dict = self.image_analysis.rgb_ratio_dict
 
     def jzazbz_color_distribution(self, label, num_channels=3):
+        """
+        Visualization of JzAzBz distribution
+        """
 
         ind = np.random.rand(90000)
         rgblist = self.compressed_img_dict[label].reshape(90000,num_channels)
@@ -85,6 +88,9 @@ class Visualisation():
 
 
     def plot_labels_in_space(self, n_clusters=2):
+        """
+        Scatterplot of mean JzAzBz coordinates for a list of words
+        """
 
         self.jzazbz_dist_dict = self.image_analysis.jzazbz_dist_dict
         self.avg_rgb_vals_dict = self.image_analysis.avg_rgb_vals_dict
@@ -139,6 +145,9 @@ class Visualisation():
 
 
     def cluster_analysis(self, plot_colorbar=True):
+        """
+        Similarity matrix of JS divergences values between aggregate JzAzBz distributions for a list of words
+        """
 
         self.cross_entropy_between_labels_matrix_js = self.image_analysis.cross_entropy_between_labels_matrix_js
 
@@ -202,6 +211,9 @@ class Visualisation():
         plt.show()
 
     def plot_tsne(self):
+        """
+        t-SNE visualization of JzAzBz distributions for a list of words
+        """
 
         self.jzazbz_dict_simp = self.image_analysis.jzazbz_dict_simp
 
@@ -238,6 +250,9 @@ class Visualisation():
 
     
     def plot_word_colors(self, word_distance=0.2, size=25, save=True):
+        """
+        Visualization of mean rgb color associated with a word, printed in text
+        """
 
         word_colors = {}
         for word in self.rgb_ratio_dict:

@@ -243,6 +243,9 @@ class ImageAnalysis():
 
 
     def compress_color_data(self):
+    	"""
+        Saves mean rgb and jzazbz values
+        """
         avg_rgb_vals_dict = {} #dictionary of average color coordinates
         for label in self.labels_list:
             try:
@@ -261,6 +264,15 @@ class ImageAnalysis():
 
 
     def get_composite_image(self, labels=None, compress_dim=300, num_channels=3, num_of_images="all", sample=False, reverse=False):
+    	"""
+        Returns colorgrams for a list of words
+    ​
+        Args:
+            labels (array): list of words
+    ​
+        Returns:
+            compressed_img_dict (dictionary of arrays): dictionary of mean rgb values for each pixel for a given word (dictionary keys are words)
+        """
         compressed_img_dict = {}
         img_data = self.image_data.rgb_dict
         if not labels:
