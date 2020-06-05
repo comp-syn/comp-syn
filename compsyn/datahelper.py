@@ -74,6 +74,34 @@ class ImageData():
             self.store_jzazbz_from_rgb(label)
         self.rgb_dict[label] = imglist
         self.labels_list = list(self.rgb_dict.keys())
+        
+    def load_image_continuum_from_folder(self, path, continuum_files, idx=0, window=100, label=None, compress_dims=(300,300), compute_jzazbz=True):
+        assert os.path.isdir(path)
+        compress_dims = self.dims if self.dims else compress_dims
+        self.dims = compress_dims
+        path = os.path.realpath(path)
+        label = label or path.split('/')[-1]
+        #files = os.listdir(path)
+        imglist = []
+        arraylist = []
+        
+        files_in_window = continuum_files[idx:idx + window]
+        
+        for file in files_in_window:
+            fp = os.path.join(path, file)
+            img = None
+            try:
+                img = self.load_rgb_image(fp, compress_dims=compress_dims)
+            except ValueError:
+                print("error")
+                continue
+            if img is not None:
+                imglist.append(img)
+        
+        if compute_jzazbz:
+            self.store_jzazbz_from_rgb(label)
+        self.rgb_dict[label] = imglist
+        self.labels_list = list(self.rgb_dict.keys())
 
 
     def load_rgb_image(self, path, compress_dims=None):
