@@ -10,6 +10,8 @@ import os
 import PIL
 import random
 
+from .logger import get_logger
+
 class ImageAnalysis():
     def __init__(self, image_data):
         #assert isinstance(image_data, compsyn.ImageData)
@@ -17,6 +19,7 @@ class ImageAnalysis():
         self.jzazbz_dict = image_data.jzazbz_dict
         self.rgb_dict = image_data.rgb_dict
         self.labels_list = image_data.labels_list
+        self.log = get_logger(__class__.__name__)
         
 
     def compute_color_distributions(self, labels="default", color_rep=['jzazbz', 'hsv', 'rgb'], spacing=36, num_bins=8, num_channels=3, 
@@ -50,7 +53,7 @@ class ImageAnalysis():
             self.jzazbz_dist_dict = {}
             for key in labels:
                 if key not in self.image_data.labels_list:
-                    print("\nlabel {} does not exist".format(key))
+                    self.log.warning(f"label {key} does not exist")
                     continue
                 if key not in self.image_data.jzazbz_dict.keys():
                     self.image_data.store_jzazbz_from_rgb(key)
@@ -70,7 +73,7 @@ class ImageAnalysis():
             self.hsv_dist_dict = {}
             for key in labels:
                 if key not in self.image_data.labels_list:
-                    print("\nlabel {} does not exist".format(key))
+                    self.log.warning("label {key} does not exist")
                     continue
                 imageset = self.rgb_ratio_dict[key]
                 dist_array, h, s, v = [], [], [], []
@@ -89,7 +92,7 @@ class ImageAnalysis():
             self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
             for key in labels:
                 if key not in self.image_data.labels_list:
-                    print("\nlabel {} does not exist".format(key))
+                    self.log.warning("label {key} does not exist")
                     continue
                 imageset = self.rgb_dict[key]
                 rgb = []
@@ -252,7 +255,7 @@ class ImageAnalysis():
                 avg_rgb = np.mean(np.mean(np.mean(self.jzazbz_dict[label],axis=0),axis=0),axis=0)
                 avg_rgb_vals_dict[label] = avg_rgb
             except:
-                print(label + " failed")
+                self.log.error(label + " failed")
                 pass
         self.avg_rgb_vals_dict = avg_rgb_vals_dict
 
@@ -278,7 +281,7 @@ class ImageAnalysis():
         if not labels:
             labels = img_data.keys()
         for label in labels:
-            print(label + " is being compressed.")
+            self.log.info(label + " is being compressed.")
             total_images = len(img_data[label])
             if num_of_images == "all":
                 vectors = img_data[label]

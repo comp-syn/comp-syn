@@ -9,6 +9,8 @@ import numpy as np
 from collections import defaultdict
 from numba import jit
 
+from .logger import get_logger
+
 test_jzazbz_array = np.load('jzazbz_array.npy')
 
 @jit
@@ -34,6 +36,7 @@ class ImageData():
         self.jzazbz_dict = defaultdict(lambda : None)
         self.labels_list = []
         self.dims = None
+        self.log = get_logger(__class__.__name__)
 
     def load_image_dict_from_subfolders(self, path, label=None, compress_dims=(300,300)):
         assert os.path.isdir(path)
@@ -43,7 +46,7 @@ class ImageData():
         folders = os.listdir(path)
         for folder in folders:
             fp = os.path.join(path, folder)
-            print(fp)
+            self.log.info(fp)
             assert os.path.isdir(fp)
             self.load_image_dict_from_folder(fp, label=label, compress_dims=compress_dims)
             self.store_jzazbz_from_rgb(label)
@@ -65,7 +68,7 @@ class ImageData():
             try:
                 img = self.load_rgb_image(fp, compress_dims=compress_dims)
             except ValueError:
-                print("error")
+                self.log.error(f"error loading rgb image from {fp}")
                 continue
             if img is not None:
                 imglist.append(img)

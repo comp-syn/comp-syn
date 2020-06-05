@@ -1,0 +1,10 @@
+*.egg-info
+__pycache__
+jzazbz_array.npy
+dist
+compsyn3-8cf6580619a9.json
+notebooks/downloads
+notebooks/colorgrams
+*.ipynb_checkpoints
+*.swp
+compsyn.log

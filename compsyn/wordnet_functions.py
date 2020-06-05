@@ -1,14 +1,11 @@
 #Need to check imports carefully
 import json
-import rapidjson
-import io 
-import requests
-from random_word import RandomWords
+import os
 from nltk.corpus import wordnet as wn
 import random
 import pandas as pd
-from textblob import Word
-from textblob.wordnet import Synset
+
+from .logger import get_logger
 
 
 def get_branching_factor(search_terms):
@@ -167,6 +164,8 @@ def get_wordnet_tree_data(search_terms, home, get_trees=True):
     home: home directory of notebook
     If get_trees = False, then return original search_term list
     """
+
+    log = get_logger("get_wordnet_tree_data")
         
     if get_trees: 
         try:
@@ -179,7 +178,7 @@ def get_wordnet_tree_data(search_terms, home, get_trees=True):
         
         except: 
             os.chdir(home)
-            print("No tree available")
+            log.warning("No tree available")
             return wordlist, {}, {}
     
     else: 
