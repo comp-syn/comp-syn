@@ -12,6 +12,43 @@ import random
 
 from .logger import get_logger
 
+def kl_divergence(dist1, dist2, symmetrized=True):
+    """
+    Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
+​
+    Args:
+        dist1 (array): first distribution
+        dist2 (array): second distribution
+        symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
+​
+    Returns:
+        kl (float): (symmetrized) KL divergence
+    """
+    if symmetrized==True:
+        kl = (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
+        return kl
+    else:
+        kl = scipy.stats.entropy(dist1,dist2)
+        return kl
+
+
+def js_divergence(dist1, dist2):
+    """
+    Calculates Jensen-Shannon (JS) divergence between two distributions
+​
+    Args:
+        dist1 (array): first distribution
+        dist2 (array): second distribution
+​
+    Returns:
+        js (float): JS divergence
+    """
+    mean_dist = (dist1 + dist2)/2.
+    js = (scipy.stats.entropy(dist1, mean_dist) + scipy.stats.entropy(dist2, mean_dist))/2.
+    return js
+
+
+
 class ImageAnalysis():
     def __init__(self, image_data):
         #assert isinstance(image_data, compsyn.ImageData)
@@ -112,42 +149,6 @@ class ImageAnalysis():
                 self.rgb_dist_dict[key] = dist_array
 
 
-    def kl_divergence(self, dist1, dist2, symmetrized=True):
-        """
-        Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
-    ​
-        Args:
-            dist1 (array): first distribution
-            dist2 (array): second distribution
-            symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
-    ​
-        Returns:
-            kl (float): (symmetrized) KL divergence
-        """
-        if symmetrized==True:
-            kl = (scipy.stats.entropy(dist1,dist2)+scipy.stats.entropy(dist2,dist1))/2.
-            return kl
-        else:
-            kl = scipy.stats.entropy(dist1,dist2)
-            return kl
-
-
-    def js_divergence(self, dist1, dist2):
-        """
-        Calculates Jensen-Shannon (JS) divergence between two distributions
-    ​
-        Args:
-            dist1 (array): first distribution
-            dist2 (array): second distribution
-    ​
-        Returns:
-            js (float): JS divergence
-        """
-        mean_dist = (dist1 + dist2)/2.
-        js = (scipy.stats.entropy(dist1, mean_dist) + scipy.stats.entropy(dist2, mean_dist))/2.
-        return js
-
-
     def entropy_computations(self, between_labels=True, between_images=True, between_all_images=False, symmetrized=True):
         """
         Performs KL and JS divergence computations between aggregate color distributions for label pairs,
@@ -185,8 +186,8 @@ class ImageAnalysis():
                 row = []
                 row_js = []
                 for word2 in words:
-                    entropy_js = self.js_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0), np.mean(np.array(jzazbz_dist_dict[word2]),axis=0))
-                    entropy = self.kl_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),symmetrized)
+                    entropy_js = js_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0), np.mean(np.array(jzazbz_dist_dict[word2]),axis=0))
+                    entropy = kl_divergence(np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),np.mean(np.array(jzazbz_dist_dict[word1]),axis=0),symmetrized)
                     row.append(entropy)
                     row_js.append(entropy_js)
                     #these lines are for convenience; if strings are correctly synced across all data they are not needed
@@ -215,8 +216,8 @@ class ImageAnalysis():
                 entropy_array_js = []
                 for i in range(len(jzazbz_dist_dict[key])):
                     for j in range(len(jzazbz_dist_dict[key])):
-                        entropy_array_js.append(self.js_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j]))
-                        entropy_array.append(self.kl_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j],symmetrized))
+                        entropy_array_js.append(js_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j]))
+                        entropy_array.append(kl_divergence(jzazbz_dist_dict[key][i],jzazbz_dist_dict[key][j],symmetrized))
                 entropy_dict[key] = entropy_array
                 entropy_dict_js[key] = entropy_array_js
             
@@ -234,7 +235,7 @@ class ImageAnalysis():
                     for i in range(len(jzazbz_dist_dict[word1])):
                         for j in range(len(jzazbz_dist_dict[word2])):
                             try:
-                                entropy_js_all.append(self.js_divergence(jzazbz_dist_dict[word1][i],jzazbz_dist_dict[word2][j]))
+                                entropy_js_all.append(js_divergence(jzazbz_dist_dict[word1][i],jzazbz_dist_dict[word2][j]))
                             except:
                                 entropy_js_all.append(np.mean(entropy_js))
                     entropy_dict_all[word1+'_'+word2] = entropy_js_all
@@ -246,7 +247,7 @@ class ImageAnalysis():
 
 
     def compress_color_data(self):
-    	"""
+        """
         Saves mean rgb and jzazbz values
         """
         avg_rgb_vals_dict = {} #dictionary of average color coordinates
@@ -267,7 +268,7 @@ class ImageAnalysis():
 
 
     def get_composite_image(self, labels=None, compress_dim=300, num_channels=3, num_of_images="all", sample=False, reverse=False):
-    	"""
+        """
         Returns colorgrams for a list of words
     ​
         Args:
@@ -294,7 +295,7 @@ class ImageAnalysis():
                 vectors = vectors[0:num_of_images]
                     
             compressed_img_dict[label] = np.zeros((compress_dim,compress_dim,num_channels))
-            compressed_img_dict[label] = np.sum(vectors ,axis=0)/(1.*len(vectors))
+            compressed_img_dict[label] = np.sum(vectors, axis=0)/(1.*len(vectors))
             
         self.compressed_img_dict = compressed_img_dict
         return compressed_img_dict

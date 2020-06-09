@@ -103,6 +103,7 @@ class ImageData():
         
         if compute_jzazbz:
             self.store_jzazbz_from_rgb(label)
+        
         self.rgb_dict[label] = imglist
         self.labels_list = list(self.rgb_dict.keys())
 
