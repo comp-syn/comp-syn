@@ -118,7 +118,9 @@ class LoadVectorsFromDisk:
             img_array
         )
 
-    def load_colorgram(self, word: str, compress_dims: Tuple[int, int] = (300, 300)) -> None:
+    def load_colorgram(
+        self, word: str, compress_dims: Tuple[int, int] = (300, 300)
+    ) -> None:
 
         img_raw = PIL.Image.open(self.path.joinpath("colorgrams/query={word}.png"))
         img_raw = img_raw.resize(
@@ -135,7 +137,9 @@ class LoadVectorsFromDisk:
             if filename.endswith(".png"):
                 q, word = filename.split("=")
                 word, png = word.split(".")
-                img_raw = PIL.Image.open(self.path.joinpath("colorgrams/query={word}.png"))
+                img_raw = PIL.Image.open(
+                    self.path.joinpath("colorgrams/query={word}.png")
+                )
                 img_raw = img_raw.resize(
                     (compress_dims[0], compress_dims[1]), PIL.Image.ANTIALIAS
                 )
@@ -144,7 +148,7 @@ class LoadVectorsFromDisk:
                 self.vectors[word].colorgram_vector = img_array
                 self.vectors[word].colorgram = img_raw
 
-    def load_concreteness_data(self) -> None::
+    def load_concreteness_data(self) -> None:
 
         with open(
             self.path.joinpath("Concreteness_ratings_Brysbaert_et_al_BRM.csv")
