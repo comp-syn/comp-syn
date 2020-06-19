@@ -129,8 +129,8 @@ class LoadVectorsFromDisk():
 			for row in ratings:
 				region,search_term,Bigram,Conc_M,Conc_SD,Unknown,Total,Percent_known,SUBTLEX,Dom_Pos = row
 				try:
-					self.vectors[search_term].conreteness_mean = float(Conc_M)
-					self.vectors[search_term].conreteness_sd = float(Conc_SD)
+					self.vectors[search_term].concreteness_mean = float(Conc_M)
+					self.vectors[search_term].concreteness_sd = float(Conc_SD)
 				except (KeyError, ValueError) as e:
 					continue
 
