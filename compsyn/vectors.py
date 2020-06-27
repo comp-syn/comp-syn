@@ -54,7 +54,9 @@ class Vector:
             "jzazbz_vector": self.jzazbz_vector.tolist(),
             "jzazbz_dist": self.jzazbz_dist.tolist(),
             "jzazbz_dist_std": self.jzazbz_dist_std.tolist(),
-            "jzazbz_composite_dists": [ dist.tolist() for dist in self.jzazbz_composite_dists],
+            "jzazbz_composite_dists": [
+                dist.tolist() for dist in self.jzazbz_composite_dists
+            ],
             "rgb_vector": self.rgb_vector.tolist(),
             "rgb_dist": self.rgb_dist.tolist(),
             "rgb_ratio": self.rgb_ratio,
