@@ -13,24 +13,28 @@ class Vector:
     def __init__(self, word: str) -> None:
         self.word = word
 
-    def load_from_folder(self, path: Path) -> None:
+    def load_from_folder(self, path: Path, **kwargs) -> Vector:
 
         img_object = datahelper.ImageData()
-        img_object.load_image_dict_from_folder(path.joinpath(self.word))
+        img_object.load_image_dict_from_folder(path, **kwargs)
         img_analysis = analysis.ImageAnalysis(img_object)
         img_analysis.compute_color_distributions(self.word, ["jzazbz", "rgb"])
         img_analysis.get_composite_image()
 
         self.jzazbz_vector = np.mean(img_analysis.jzazbz_dict[self.word], axis=0)
         self.jzazbz_dist = np.mean(img_analysis.jzazbz_dist_dict[self.word], axis=0)
+        self.jzazbz_dist_std = np.std(img_analysis.jzazbz_dist_dict[self.word], axis=0)
+        self.jzazbz_composite_dists = img_analysis.jzazbz_dist_dict[self.word]
 
         self.rgb_vector = np.mean(img_analysis.rgb_dict[self.word], axis=0)
         self.rgb_dist = np.mean(img_analysis.rgb_dist_dict[self.word], axis=0)
-
         self.rgb_ratio = np.mean(img_analysis.rgb_ratio_dict[self.word], axis=0)
+
         self.colorgram_vector = img_analysis.compressed_img_dict[self.word]
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
+
+        return self
 
     def print_word_color(self, size: int = 30, color_magnitude: float = 1.65) -> None:
 
@@ -43,18 +47,29 @@ class Vector:
         ax.set_axis_off()
         plt.show()
 
-    def save_vector_to_disk(self) -> None:
+    def to_dict(self) -> Dict[str, Any]:
 
-        vector_properties = {}
-        vector_properties["jzazbz_vector"] = self.jzazbz_vector
-        vector_properties["jzazbz_dist"] = self.jzazbz_dist
-        vector_properties["rgb_vector"] = self.rgb_vector
-        vector_properties["rgb_dist"] = self.rgb_dist
-        vector_properties["rgb_ratio"] = self.rgb_ratio
-        vector_properties["colorgram_vector"] = self.colorgram_vector
+        return {
+            "query": self.word,
+            "jzazbz_vector": self.jzazbz_vector.tolist(),
+            "jzazbz_dist": self.jzazbz_dist.tolist(),
+            "jzazbz_dist_std": self.jzazbz_dist_std.tolist(),
+            "jzazbz_composite_dists": [ dist.tolist() for dist in self.jzazbz_composite_dists],
+            "rgb_vector": self.rgb_vector.tolist(),
+            "rgb_dist": self.rgb_dist.tolist(),
+            "rgb_ratio": self.rgb_ratio,
+            "colorgram_vector": self.colorgram_vector,
+        }
 
-        with open(self.word + "_vector_properties", "w") as fp:
-            json.dump(vector_properties, fp)
+
+def write_vectors_dataset(
+    vectors: Generator[Vector, None, None], downloads_path: Path, dataset_path: Path
+) -> None:
+    """
+    Write a file with JSON representations of vectors.
+    """
+    dataset = [vector.to_dict() for vector in vectors]
+    dataset_path.write_bytes(json.dump(dataset))
 
 
 class LoadVectorsFromDisk:

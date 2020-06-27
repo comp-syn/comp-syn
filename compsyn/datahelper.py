@@ -63,7 +63,7 @@ class ImageData:
     def load_image_dict_from_folder(
         self, path, label=None, compress_dims=(300, 300), compute_jzazbz=True
     ):
-        assert os.path.isdir(path)
+        assert os.path.isdir(path), f"{path} must be a directory"
         compress_dims = self.dims if self.dims else compress_dims
         self.dims = compress_dims
         path = os.path.realpath(path)

@@ -8,7 +8,7 @@ DESCRIPTION = ''
 with open('README.rst') as f:
     LONG_DESCRIPTION = f.read()
 
-version = "0.2.1"
+version = "0.2.2"
 setup(name='compsyn',
       version=version,
       description='python package to explore the color of language',
@@ -26,10 +26,12 @@ setup(name='compsyn',
       ],
       packages=['compsyn'],
       install_requires=[
+          'black',
           'numpy',
           'scipy',
           'pillow',
           'matplotlib',
+          'memory_profiler',
           'numba',
           'seaborn',
           'scikit-learn',

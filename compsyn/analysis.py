@@ -148,7 +148,7 @@ class ImageAnalysis:
             self.hsv_dist_dict = {}
             for key in labels:
                 if key not in self.image_data.labels_list:
-                    self.log.warning("label {key} does not exist")
+                    self.log.warning(f"label {key} does not exist")
                     continue
                 imageset = self.rgb_ratio_dict[key]
                 dist_array, h, s, v = [], [], [], []
@@ -170,7 +170,7 @@ class ImageAnalysis:
             self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
             for key in labels:
                 if key not in self.image_data.labels_list:
-                    self.log.warning("label {key} does not exist")
+                    self.log.warning(f"label {key} does not exist")
                     continue
                 imageset = self.rgb_dict[key]
                 rgb = []
