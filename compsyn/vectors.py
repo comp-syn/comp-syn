@@ -64,16 +64,6 @@ class Vector:
         }
 
 
-def write_vectors_dataset(
-    vectors: Generator[Vector, None, None], downloads_path: Path, dataset_path: Path
-) -> None:
-    """
-    Write a file with JSON representations of vectors.
-    """
-    dataset = [vector.to_dict() for vector in vectors]
-    dataset_path.write_bytes(json.dump(dataset))
-
-
 class LoadVectorsFromDisk:
     def __init__(self, path: Union[str, Path], default: bool = True) -> None:
 
