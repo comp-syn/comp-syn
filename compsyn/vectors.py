@@ -22,9 +22,10 @@ class Vector:
         img_analysis.get_composite_image()
 
         self.jzazbz_vector = np.mean(img_analysis.jzazbz_dict[self.word], axis=0)
-        self.jzazbz_dist = np.mean(img_analysis.jzazbz_dist_dict[self.word], axis=0)
-        self.jzazbz_dist_std = np.std(img_analysis.jzazbz_dist_dict[self.word], axis=0)
         self.jzazbz_composite_dists = img_analysis.jzazbz_dist_dict[self.word]
+        self.jzazbz_dist = np.mean(self.jzazbz_composite_dists, axis=0)
+
+        self.jzazbz_dist_std = np.std(self.jzazbz_composite_dists, axis=0)
 
         self.rgb_vector = np.mean(img_analysis.rgb_dict[self.word], axis=0)
         self.rgb_dist = np.mean(img_analysis.rgb_dist_dict[self.word], axis=0)

@@ -76,9 +76,8 @@ class ImageData:
             img = None
             try:
                 img = self.load_rgb_image(fp, compress_dims=compress_dims)
-            except ValueError:
-                self.log.error(f"error loading rgb image from {fp}")
-                continue
+            except ValueError as exc:
+                self.log.error(f"{exc} error loading rgb image from {fp}")
             if img is not None:
                 imglist.append(img)
 
@@ -113,9 +112,8 @@ class ImageData:
             img = None
             try:
                 img = self.load_rgb_image(fp, compress_dims=compress_dims)
-            except ValueError:
-                print("error")
-                continue
+            except ValueError as exc:
+                self.log.error(f"{exc} failed to load image {fp}")
             if img is not None:
                 imglist.append(img)
 

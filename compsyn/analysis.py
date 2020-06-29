@@ -140,6 +140,9 @@ class ImageAnalysis:
                             density=True,
                         )[0]
                     )
+                    if True in np.isnan(dist):
+                        # Drop any dists that contain NaN
+                        continue
                     dist_array.append(dist)
                 self.jzazbz_dist_dict[key] = dist_array
 
@@ -327,7 +330,8 @@ class ImageAnalysis:
                                         jzazbz_dist_dict[word2][j],
                                     )
                                 )
-                            except:
+                            except Exception as exc:
+                                self.log.error(exc)
                                 entropy_js_all.append(np.mean(entropy_js))
                     entropy_dict_all[word1 + "_" + word2] = entropy_js_all
                     row_js_all.append(np.mean(entropy_js_all))
@@ -347,9 +351,9 @@ class ImageAnalysis:
                     np.mean(np.mean(self.jzazbz_dict[label], axis=0), axis=0), axis=0
                 )
                 avg_rgb_vals_dict[label] = avg_rgb
-            except:
+            except Exception as exc:
+                self.log.error(exc)
                 self.log.error(label + " failed")
-                pass
         self.avg_rgb_vals_dict = avg_rgb_vals_dict
 
         jzazbz_dict_simp = {}
