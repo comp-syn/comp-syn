@@ -34,6 +34,9 @@ def get_parser() -> argparse.ArgumentParser():
         "--max", type=int, required=False, help="max number of vectors to load"
     )
     create_parser.add_argument(
+        "--include", nargs="+", help="fields to include for each vector"
+    )
+    create_parser.add_argument(
         "--profile",
         action="store_true",
         help="Create a memory profile graph to track memory usage as a function of vectors loaded",
@@ -84,24 +87,19 @@ if __name__ == "__main__":
                 directory_with_raw_images(term_images_path), label=term
             )
             vector_data = vector.to_dict()
-            # for more compact storage, we do not store all of the vector data
-            for delete_field in [
-                "jzazbz_vector",
-                "rgb_vector",
-                "rgb_ratio",
-                "colorgram_vector",
-            ]:
-                try:
-                    del vector_data[delete_field]
-                except KeyError as e:
-                    log.warning(
-                        f"tried to delete {delete_field} but vector.to_dict() did not have that key"
-                    )
+
+            # delete all fields not explicitly requested
+            for field in list(vector_data.keys()):
+                if field not in args.include:
+                    log.debug(f"dropped field {term_images_path.name}")
+                    del vector_data[field]
 
             vector_data["experiment_name"] = args.name
             dataset.append(vector_data)
             log.debug(f"loaded vector for '{term_images_path.name}'")
+
             del vector  # to try to keep memory usage down over large batches
+
             if len(dataset) % 10 == 0:
                 mem_mb_usage_profile[len(dataset)] = (
                     memory_profiler.memory_usage()[0] - start_mem[0]

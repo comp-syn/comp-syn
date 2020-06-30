@@ -3,18 +3,15 @@
 
 from __future__ import annotations
 
-# Need to check for un-necessary imports
 import datetime
 import hashlib
 import io
 import json
-import matplotlib.pyplot as plt
-import numpy as np
 import os
-import pandas as pd
 import random
 import requests
 import time
+
 from PIL import Image
 from google.cloud import vision_v1p2beta1 as vision
 from selenium import webdriver

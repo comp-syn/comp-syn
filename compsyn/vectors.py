@@ -1,12 +1,16 @@
 from __future__ import annotations
-from compsyn import datahelper, analysis, visualisation, vectors
+
 import os
-import PIL
-import numpy as np
-import matplotlib.pyplot as plt
 import json
 import csv
 from pathlib import Path
+
+import PIL
+import numpy as np
+import matplotlib.pyplot as plt
+
+from .datahelper import ImageData, rgb_array_to_jzazbz_array
+from .analysis import ImageAnalysis
 
 
 class Vector:
@@ -15,9 +19,9 @@ class Vector:
 
     def load_from_folder(self, path: Path, **kwargs) -> Vector:
 
-        img_object = datahelper.ImageData()
+        img_object = ImageData()
         img_object.load_image_dict_from_folder(path, **kwargs)
-        img_analysis = analysis.ImageAnalysis(img_object)
+        img_analysis = ImageAnalysis(img_object)
         img_analysis.compute_color_distributions(self.word, ["jzazbz", "rgb"])
         img_analysis.get_composite_image()
 
@@ -75,20 +79,15 @@ class LoadVectorsFromDisk:
 
     def load_distributions(self) -> None:
 
-        with open(self.path.joinpath("vectors.json")) as vectors_json:
+        for vector_data in json.load(self.path.joinpath("vectors.json").read_bytes()):
+            word = vector_data["query"]
 
-            vectors_dist = json.load(vectors_json)
+            word_vector = vectors.Vector(word)
+            word_vector.rgb_dist = vector_data["rgb_dist"]
+            word_vector.jzazbz_dist = vector_data["jzazbz_dist"]
+            word_vector.jzazbz_dist_std = vector_data["jzazbz_dist_std"]
 
-            for info in vectors_dist:
-                word = info["query"]
-                rgb_dist = info["rgb_dist"]
-                jzazbz_dist = info["jzazbz_dist"]
-
-                word_vector = vectors.Vector(word)
-                word_vector.rgb_dist = rgb_dist
-                word_vector.jzazbz_dist = jzazbz_dist
-
-                self.vectors[word] = word_vector
+            self.vectors[word] = word_vector
 
     def load_info_from_all_colorgrams(
         self, compress_dims: Tuple[int, int] = (300, 300)
@@ -107,9 +106,7 @@ class LoadVectorsFromDisk:
                 img_array = np.array(img_raw)[:, :, :3]
 
                 self.vectors[word].rgb_vector = img_array
-                self.vectors[word].jzazbz_vector = datahelper.rgb_array_to_jzazbz_array(
-                    img_array
-                )
+                self.vectors[word].jzazbz_vector = rgb_array_to_jzazbz_array(img_array)
 
     def load_info_from_colorgram(
         self, word: str, compress_dims: Tuple[int, int] = (300, 300)
@@ -122,9 +119,7 @@ class LoadVectorsFromDisk:
         img_array = np.array(img_raw)[:, :, :3]
 
         self.vectors[word].rgb_vector = img_array
-        self.vectors[word].jzazbz_vector = datahelper.rgb_array_to_jzazbz_array(
-            img_array
-        )
+        self.vectors[word].jzazbz_vector = rgb_array_to_jzazbz_array(img_array)
 
     def load_colorgram(
         self, word: str, compress_dims: Tuple[int, int] = (300, 300)

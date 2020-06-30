@@ -1,32 +1,20 @@
-import matplotlib.colors as colors
+import gzip
+import os
+
+import colorsys
 import matplotlib.cm as cm
-import colorsys
-import seaborn as sns
-import PIL
-from PIL import Image
-
-import colorsys
 import matplotlib.colors as colors
-from numba import jit
-
-from sklearn.cluster import KMeans
-import pickle
-import scipy
+import matplotlib.pyplot as plt
+import numpy as np
 import pylab
 import scipy.cluster.hierarchy as sch
-from scipy.spatial.distance import squareform
-from scipy.spatial import ConvexHull
-from scipy.ndimage import gaussian_filter
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.ticker import MaxNLocator
-import matplotlib.pyplot as plt
-import os
-from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-import numpy as np
-
+from matplotlib.ticker import MaxNLocator
+from scipy.spatial.distance import squareform
+from scipy.ndimage import gaussian_filter
+from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
-import gzip
 
 
 cmap = cm.plasma(np.linspace(0.0, 0.5, 3))

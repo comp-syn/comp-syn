@@ -1,14 +1,14 @@
 # analysis code
 
+import time
+import os
+import random
+
+import PIL
 import numpy as np
 import scipy.stats
-import time
 import matplotlib.colors as mplcolors
-import compsyn as cs
 from numba import jit
-import os
-import PIL
-import random
 
 from .logger import get_logger
 
@@ -16,12 +16,12 @@ from .logger import get_logger
 def kl_divergence(dist1, dist2, symmetrized=True):
     """
     Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
-​
+
     Args:
         dist1 (array): first distribution
         dist2 (array): second distribution
         symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
-​
+
     Returns:
         kl (float): (symmetrized) KL divergence
     """
@@ -38,11 +38,11 @@ def kl_divergence(dist1, dist2, symmetrized=True):
 def js_divergence(dist1, dist2):
     """
     Calculates Jensen-Shannon (JS) divergence between two distributions
-​
+
     Args:
         dist1 (array): first distribution
         dist2 (array): second distribution
-​
+
     Returns:
         js (float): JS divergence
     """
@@ -80,7 +80,7 @@ class ImageAnalysis:
     ):
         """
         Calculates color distributions for each word in a dictionary
-        ​
+        
         Args:
             self (class instance): ImageAnalysis class instance
             labels (string): if "default" grabs dictionary keys as labels
@@ -91,7 +91,7 @@ class ImageAnalysis:
             *z_min (*z_max) (float): minimum (maximum) of JzAzBz coordinates
             h_max (int): maximum hue (in degrees)
             rgb_max (int): maximum value in RGB
-        ​
+        
         Returns:
             self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
         """
@@ -222,13 +222,13 @@ class ImageAnalysis:
         Performs KL and JS divergence computations between aggregate color distributions for label pairs,
         between color distributions for image pairs (for a given label), and between color distributions
         for all image pairs (between all labels)
-    ​
+    
         Args:
             self (class instance): ImageAnalysis class instance
             between_labels (Boolean): Whether to calculate cross entropy between labels (default True)
             between_images (Boolean): Whether to calculate cross entropy between images for each label (default True)
             between_all_images (Boolean): Whether to calculate cross entropy between images for all labels (default False)
-    ​
+    
         Returns:
             (Default)
             self.cross_entropy_between_labels_dict (dictionary): dictionary of KL divergence values for each pair of words in JzAzBz
@@ -373,10 +373,10 @@ class ImageAnalysis:
     ):
         """
         Returns colorgrams for a list of words
-    ​
+    
         Args:
             labels (array): list of words
-    ​
+    
         Returns:
             compressed_img_dict (dictionary of arrays): dictionary of mean rgb values for each pixel for a given word (dictionary keys are words)
         """

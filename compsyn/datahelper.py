@@ -1,12 +1,11 @@
 # data helper code
 
-# DataCollector
-
 import os
-import PIL
-from PIL import Image
-import numpy as np
 from collections import defaultdict
+
+import PIL
+import numpy as np
+from PIL import Image
 from numba import jit
 
 from .logger import get_logger

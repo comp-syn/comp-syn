@@ -1,9 +1,9 @@
 # Need to check imports carefully
-import json
 import os
-from nltk.corpus import wordnet as wn
 import random
+
 import pandas as pd
+from nltk.corpus import wordnet as wn
 
 from .logger import get_logger
 
