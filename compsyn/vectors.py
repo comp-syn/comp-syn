@@ -79,10 +79,10 @@ class LoadVectorsFromDisk:
 
     def load_distributions(self) -> None:
 
-        for vector_data in json.load(self.path.joinpath("vectors.json").read_bytes()):
+        for vector_data in json.loads(self.path.joinpath("vectors-v2.json").read_text()):
             word = vector_data["query"]
 
-            word_vector = vectors.Vector(word)
+            word_vector = Vector(word)
             word_vector.rgb_dist = vector_data["rgb_dist"]
             word_vector.jzazbz_dist = vector_data["jzazbz_dist"]
             word_vector.jzazbz_dist_std = vector_data["jzazbz_dist_std"]
@@ -112,7 +112,7 @@ class LoadVectorsFromDisk:
         self, word: str, compress_dims: Tuple[int, int] = (300, 300)
     ) -> None:
 
-        img_raw = PIL.Image.open(self.path.joinpath("colorgrams/query={word}.png"))
+        img_raw = PIL.Image.open(self.path.joinpath(f"colorgrams/query={word}.png"))
         img_raw = img_raw.resize(
             (compress_dims[0], compress_dims[1]), PIL.Image.ANTIALIAS
         )
@@ -125,7 +125,7 @@ class LoadVectorsFromDisk:
         self, word: str, compress_dims: Tuple[int, int] = (300, 300)
     ) -> None:
 
-        img_raw = PIL.Image.open(self.path.joinpath("colorgrams/query={word}.png"))
+        img_raw = PIL.Image.open(self.path.joinpath(f"colorgrams/query={word}.png"))
         img_raw = img_raw.resize(
             (compress_dims[0], compress_dims[1]), PIL.Image.ANTIALIAS
         )
@@ -141,7 +141,7 @@ class LoadVectorsFromDisk:
                 q, word = filename.split("=")
                 word, png = word.split(".")
                 img_raw = PIL.Image.open(
-                    self.path.joinpath("colorgrams/query={word}.png")
+                    self.path.joinpath(f"colorgrams/query={word}.png")
                 )
                 img_raw = img_raw.resize(
                     (compress_dims[0], compress_dims[1]), PIL.Image.ANTIALIAS
