@@ -155,7 +155,7 @@ class LoadVectorsFromDisk:
     def load_concreteness_data(self) -> None:
 
         with open(
-            self.path.joinpath("Concreteness_ratings_Brysbaert_et_al_BRM.csv")
+            self.path.joinpath("Concreteness_ratings.csv")
         ) as csvfile:
             ratings = csv.reader(csvfile)
             for row in ratings:
