@@ -20,7 +20,8 @@ class Vector:
     def load_from_folder(self, path: Path, **kwargs) -> Vector:
 
         img_object = ImageData()
-        img_object.load_image_dict_from_folder(path, **kwargs)
+        self.path = Path(path).joinpath(self.word)
+        img_object.load_image_dict_from_folder(self.path, **kwargs)
         img_analysis = ImageAnalysis(img_object)
         img_analysis.compute_color_distributions(self.word, ["jzazbz", "rgb"])
         img_analysis.get_composite_image()
@@ -77,9 +78,9 @@ class LoadVectorsFromDisk:
         if default:
             self.load_distributions()
 
-    def load_distributions(self) -> None:
+    def load_distributions(self, distributions="concreteness-color-embeddings.json") -> None:
 
-        for vector_data in json.loads(self.path.joinpath("vectors-v2.json").read_text()):
+        for vector_data in json.loads(self.path.joinpath(distributions).read_text()):
             word = vector_data["query"]
 
             word_vector = Vector(word)
