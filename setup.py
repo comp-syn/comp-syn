@@ -8,7 +8,7 @@ DESCRIPTION = ''
 with open('README.rst') as f:
     LONG_DESCRIPTION = f.read()
 
-version = "0.3.0"
+version = "0.2.2"
 setup(name='compsyn',
       version=version,
       description='python package to explore the color of language',
