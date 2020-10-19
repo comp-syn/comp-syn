@@ -20,7 +20,7 @@ class Vector:
     def load_from_folder(self, path: Path, **kwargs) -> Vector:
 
         img_object = ImageData()
-        self.path = Path(path).joinpath(self.word)
+        self.path = Path(path)
         img_object.load_image_dict_from_folder(self.path, **kwargs)
         img_analysis = ImageAnalysis(img_object)
         img_analysis.compute_color_distributions(self.word, ["jzazbz", "rgb"])
@@ -65,8 +65,8 @@ class Vector:
             ],
             "rgb_vector": self.rgb_vector.tolist(),
             "rgb_dist": self.rgb_dist.tolist(),
-            "rgb_ratio": self.rgb_ratio,
-            "colorgram_vector": self.colorgram_vector,
+            "rgb_ratio": self.rgb_ratio.tolist(),
+            "colorgram_vector": self.colorgram_vector.tolist(),
         }
 
 
