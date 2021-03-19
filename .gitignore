@@ -8,3 +8,5 @@ notebooks/colorgrams
 *.ipynb_checkpoints
 *.swp
 compsyn.log
+Figures
+geckodriver.log

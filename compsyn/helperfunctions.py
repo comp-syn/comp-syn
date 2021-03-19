@@ -206,7 +206,6 @@ def search_and_download(
     search_term: str,
     driver_browser: str,
     driver_executable_path: str,
-    home: str,
     driver_options: Optional[List[str]] = None,
     target_path: str = "./downloads",
     number_images: int = 5,
@@ -225,10 +224,8 @@ def search_and_download(
        sleep_time: general rate of sleep activity (lower values raise red flags for Google)
     """
 
-    target_folder = os.path.join(target_path, search_term)
-
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
 
     with get_webdriver(
         driver_browser=driver_browser,
@@ -240,10 +237,9 @@ def search_and_download(
         )
 
     for url in urls:
-        save_image(target_folder, url)
+        save_image(target_path, url)
 
     wd.quit()
-    os.chdir(home)
 
     return urls
 
