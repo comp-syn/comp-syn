@@ -16,6 +16,7 @@ def get_parser() -> argparse.ArgumentParser():
     parser = argparse.ArgumentParser(prog="compsyn-datasets")
 
     sub_parsers = parser.add_subparsers(dest="command")
+    # TODO: download mode (from elasticsearch/s3)
     create_parser = sub_parsers.add_parser(
         "create", help="create a dataset JSON file from a downloads directory"
     )
@@ -41,6 +42,17 @@ def get_parser() -> argparse.ArgumentParser():
         action="store_true",
         help="Create a memory profile graph to track memory usage as a function of vectors loaded",
     )
+    create_parser.add_argument(
+        "--required-colorgram-count",
+        type=int,
+        default=30,
+        help="number of images to use in a colorgram"
+    )
+    create_parser.add_argument(
+        "--save-colorgrams",
+        action="store_true",
+        help="save colorgram images to disk"
+    )
 
     return parser
 
@@ -63,6 +75,8 @@ if __name__ == "__main__":
     if args.command == "create":
         log = get_logger("dataset.create")
         log.info(f"Creating a dataset of vectors called {args.name}")
+        if args.include is None:
+            log.warning(f"Since no fields are specified for inclusion with --include, all fields will be included. Each colorgram will produce ~15MB of data.")
         output_path = (
             args.downloads.joinpath(f"compsyn-dataset-{args.name}").with_suffix(".json")
             if args.output_path is None
@@ -83,16 +97,28 @@ if __name__ == "__main__":
             if args.max is not None:
                 if len(dataset) >= args.max:
                     break
+            term_directory = directory_with_raw_images(term_images_path)
+            image_count = len(list(term_directory.iterdir()))
+            if not  image_count > args.required_colorgram_count:
+                log.info(f"not enough images in {term} ({image_count}/{args.required_colorgram_count})")
+                continue
+
             vector = Vector(term).load_from_folder(
-                directory_with_raw_images(term_images_path), label=term
+                term_directory, label=term
             )
             vector_data = vector.to_dict()
+            if args.save_colorgrams:
+                colorgram_path = output_path.parent.joinpath(args.name).joinpath("colorgrams").joinpath(term).with_suffix(".png")
+                colorgram_path.parent.mkdir(exist_ok=True, parents=True)
+                print(f"saving colorgram image to {colorgram_path}")
+                vector.colorgram.save(colorgram_path)
 
             # delete all fields not explicitly requested
             for field in list(vector_data.keys()):
-                if field not in args.include:
-                    log.debug(f"dropped field {term_images_path.name}")
-                    del vector_data[field]
+                if args.include is not None:
+                    if field not in args.include:
+                        log.debug(f"dropped field {term_images_path.name}")
+                        del vector_data[field]
 
             vector_data["experiment_name"] = args.name
             dataset.append(vector_data)
