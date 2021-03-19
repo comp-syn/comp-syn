@@ -49,6 +49,8 @@ class ImageData:
         self.dims = compress_dims
         path = os.path.realpath(path)
         folders = os.listdir(path)
+        if len(folders) == 0:
+            self.log.error(f"No subfolders found {folders}")
         for folder in folders:
             fp = os.path.join(path, folder)
             self.log.info(fp)
