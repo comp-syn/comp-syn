@@ -13,7 +13,6 @@ from .logger import get_logger
 test_jzazbz_array = np.load("jzazbz_array.npy")
 
 
-@jit
 def rgb_array_to_jzazbz_array(rgb_array):
     """
     Converts rgb pixel values to JzAzBz pixel values
@@ -24,12 +23,11 @@ def rgb_array_to_jzazbz_array(rgb_array):
     Returns:
         jzazbz_array (array): matrix of JzAzBz pixel values
     """
-    jzazbz_array = np.zeros(rgb_array.shape)
-    for i in range(rgb_array.shape[0]):
-        for j in range(rgb_array.shape[1]):
-            jzazbz_array[i][j] = test_jzazbz_array[rgb_array[i][j][0]][
-                rgb_array[i][j][1]
-            ][rgb_array[i][j][2]]
+    r = rgb_arrays[:,:,0].reshape([-1])
+    g = rgb_arrays[:,:,1].reshape([-1])
+    b = rgb_arrays[:,:,2].reshape([-1])
+    jzazbz_vals = test_jzazbz_array[r,g,b]
+    jzazbz_array = jzazbz_vals.reshape(list(rgb_arrays.shape[:3])).transpose([0,1,2])
     return jzazbz_array
 
 
