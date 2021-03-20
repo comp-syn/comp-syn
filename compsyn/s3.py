@@ -55,7 +55,13 @@ def get_s3_args(
     return parser
 
 
+
 def get_s3_client(args: argparse.Namespace) -> botocore.clients.s3:
+
+    assert args.s3_region_name is not None, "set COMPSYN_S3_REGION_NAME"
+    assert args.s3_access_key_id is not None, "set COMPSYN_S3_ACCESS_KEY_ID"
+    assert args.s3_secret_access_key is not None, "set COMPSYN_S3_SECRET_ACCESS_KEY"
+    assert args.s3_bucket is not None, "set COMPSYN_S3_BUCKET"
 
     return boto3.session.Session().client(
         "s3",
@@ -68,7 +74,7 @@ def get_s3_client(args: argparse.Namespace) -> botocore.clients.s3:
 
 def s3_object_exists(s3_path: Path) -> bool:
 
-    s3_args = get_s3_args().parse_args()
+    s3_args, unknown = get_s3_args().parse_known_args()
     s3_client = get_s3_client(s3_args)
     log = get_logger("s3_object_exists")
 
@@ -82,7 +88,7 @@ def s3_object_exists(s3_path: Path) -> bool:
 
 def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) -> None:
 
-    s3_args = get_s3_args().parse_args()
+    s3_args, unknown = get_s3_args().parse_known_args()
     s3_client = get_s3_client(s3_args)
     log = get_logger("upload_file_to_s3")
 
@@ -114,7 +120,7 @@ def download_file_from_s3(
     local_path: Path, s3_path: Path, overwrite: bool = False
 ) -> None:
 
-    s3_args = get_s3_args().parse_args()
+    s3_args, unknown = get_s3_args().parse_known_args()
     s3_client = get_s3_client(s3_args)
     log = get_logger("download_file_from_s3")
 

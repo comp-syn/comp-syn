@@ -4,7 +4,8 @@ import pytest
 from pytest import approx
 
 from compsyn.s3 import get_s3_client
-from compsyn.wordtocolor_vectors import WordToColorVector
+from compsyn.wordtocolor_vector import WordToColorVector
+from compsyn.trial import Trial
 
 
 @pytest.mark.unit

@@ -44,7 +44,10 @@ class Vector:
         #: label for the vector
         self.label = label
         #: optional revision string to use for saving to a shared backend
-        self.revision = revision
+        if revision is None:
+            self.revision = "unnamed-revision"
+        else:
+            self.revision = revision
         #: metadata to associate with results can be configured through a Trial dataclass
         if trial is None:
             # default to getting trial metadata from the environment
@@ -65,15 +68,15 @@ class Vector:
                 f"set {self.__class__.__name__}.revision before pushing"
             )
         return (
-            Path(f"{self.trial.experiment_name}/wordtocolorvectors")
+            Path(f"{self.trial.experiment_name}/vectors")
             .joinpath(self.revision)
-            .joinpath(self.word)
+            .joinpath(self.label)
             .joinpath("w2cv.pickle")
         )
 
-    @abstractmethod
-    def create_embedding(self, **kwargs) -> Vector:
-        # run analysis from folder of local data, generating a Vector
+    #@abstractmethod
+    def run_analysis(self, **kwargs) -> None:
+        # run analysis from folder of local data, populating attributes of the Vector object
         pass
 
     def save(self):
