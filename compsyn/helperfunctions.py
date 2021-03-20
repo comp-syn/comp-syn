@@ -11,6 +11,7 @@ import os
 import random
 import requests
 import time
+from collections import defaultdict
 
 from PIL import Image
 from google.cloud import vision_v1p2beta1 as vision
@@ -89,7 +90,8 @@ def fetch_image_urls(
     wd: webdriver,
     thumb_css: str = "img.Q4LuWd",
     img_css: str = "img.n3VNCb",
-    load_page_css: str = ".mye4qd",
+    load_more_css: str = ".mye4qd",
+    see_more_anyway_css: str = ".r0zKGf",
     sleep_between_interactions: float = 0.4,
 ) -> List[str]:
 
@@ -119,6 +121,7 @@ def fetch_image_urls(
     image_urls = set()
     image_count = 0
     results_start = 0
+    number_results = 0
 
     while image_count < number_of_links_to_fetch:
 
@@ -128,7 +131,7 @@ def fetch_image_urls(
         )  # get all image thumbnail results
         if len(thumbnail_results) == 0:
             log.warning(f"found no thumbnails using the selector {thumb_css}")
-        number_results = len(thumbnail_results)
+        number_results += len(thumbnail_results)
 
         log.info(
             f"Found: {number_results} search results. Extracting links from {results_start}:{number_results}"
@@ -150,23 +153,43 @@ def fetch_image_urls(
                 if actual_image.get_attribute(
                     "src"
                 ) and "http" in actual_image.get_attribute("src"):
-                    image_urls.add(actual_image.get_attribute("src"))
-                    image_count += 1
+                    image_url = actual_image.get_attribute("src")
+                    if image_url not in image_urls:
+                        # only count if we could actually download an image
+                        image_count += 1 
+                    image_urls.add(image_url)
                     if image_count >= number_of_links_to_fetch:
-                        log.info(f"Found: {image_count} image links, done!")
+                        log.info(f"Found: {len(image_urls)}/{image_count} image links, done!")
                         return image_urls
 
+        
+        log.info(f"Found: {image_count} usable image links, looking for more ...")
+        scroll_to_end(wd)
+
+        # look for the More Results or Load More Anyway button, preferring the latter as it is conditional
+        try:
+            see_more_anyway_button = wd.find_element_by_css_selector(see_more_anyway_css)
+        except selenium.common.exceptions.NoSuchElementException:
+            see_more_anyway_button = None
+
+        try:
+            load_more_button = wd.find_element_by_css_selector(load_more_css)
+        except selenium.common.exceptions.NoSuchElementException:
+            load_more_button = None
+
+        if see_more_anyway_button:
+            # prefer this one
+            wd.execute_script(f"document.querySelector('{see_more_anyway_css}').click();")
+            log.debug(f"clicked See More Anyway ({see_more_anyway_css})")
+        elif load_more_button:
+            wd.execute_script(f"document.querySelector('{load_more_css}').click();")
+            log.debug(f"clicked Load More ({load_more_css})")
         else:
-            log.info(f"Found: {image_count} image links, looking for more ...")
-            load_more_button = wd.find_element_by_css_selector(load_page_css)
-            if load_more_button:
-                fuzzy_sleep(sleep_between_interactions)
-                wd.execute_script(f"document.querySelector('{load_page_css}').click();")
-            else:
-                log.warning(
-                    f"{image_count}/{number_of_links_to_fetch} images gathered, but no 'load_more_button' found with the selector '{load_page_css}', returning what we have so far"
-                )
-                return image_urls
+            log.warning(
+                f"{image_count}/{number_of_links_to_fetch} images gathered, but no 'load_more_button' or 'see_more_anyway' buttons found with the selectors '{load_more_css}'/'{see_more_anyway_css}', returning what we have so far"
+            )
+            return image_urls
+        fuzzy_sleep(sleep_between_interactions)
 
         # move the result startpoint further down
         results_start = len(thumbnail_results)
@@ -182,24 +205,16 @@ def save_image(folder_path: str, url: str) -> None:
 
     log = get_logger("save_image")
 
-    try:
-        image_content = requests.get(url).content
-    except Exception as e:
-        log.error(f"Could not download {url}: {e}")
+    image_content = requests.get(url).content
 
-    try:
-        image_file = io.BytesIO(image_content)
-        image = Image.open(image_file).convert("RGB")
-        file_path = os.path.join(
-            folder_path, hashlib.sha1(image_content).hexdigest()[:10] + ".jpg"
-        )
+    image_file = io.BytesIO(image_content)
+    image = Image.open(image_file).convert("RGB")
+    file_path = os.path.join(
+        folder_path, hashlib.sha1(image_content).hexdigest()[:10] + ".jpg"
+    )
 
-        with open(file_path, "wb") as f:
-            image.save(f, "JPEG", quality=85)
-
-    except Exception as e:
-        log.error(f"Could not save image to disk: {e}")
-        pass
+    with open(file_path, "wb") as f:
+        image.save(f, "JPEG", quality=85)
 
 
 def search_and_download(
@@ -237,7 +252,15 @@ def search_and_download(
         )
 
     for url in urls:
-        save_image(target_path, url)
+        errors = defaultdict(list)
+        try:
+            save_image(target_path, url)
+        except Exception as e:
+            errors[e].append(url)
+
+        if len(errors) > 0:
+            get_logger("search_and_download").warning(f"{len(errors)} images could not be downloaded from the scraped URLs: {errors}")
+
 
     wd.quit()
 

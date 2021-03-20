@@ -48,14 +48,14 @@ def test_w2cv_fresh_run():
     w2cv.save()
 
 
-@pytest.mark.integration
+@pytest.mark.online
 def test_w2cv_s3_push():
     w2cv = WordToColorVector(label="dog", revision="raw-test")
     w2cv.load()
     w2cv.push(include_raw_images=True, overwrite=True)
 
 
-@pytest.mark.integration
+@pytest.mark.online
 def test_w2cv_s3_pull():
     w2cv = WordToColorVector(label="dog", revision="raw-test")
     w2cv.pull(include_raw_images=True, overwrite=True)

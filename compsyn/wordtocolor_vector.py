@@ -85,7 +85,11 @@ class WordToColorVector(Vector):
         """ Gather images from Google Images """
 
         # check if there are already raw images available already
-        raw_images_available = len(list(self._local_raw_images_path.iterdir()))
+        try:
+            raw_images_available = len(list(self._local_raw_images_path.iterdir()))
+        except FileNotFoundError:
+            raw_images_available = 0
+
         if raw_images_available >= 0.80 * self.number_of_images:
             self.log.info(
                 f"there are already {raw_images_available} raw images available, skipping image capture"
