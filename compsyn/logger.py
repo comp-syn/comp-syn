@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import os
 import logging
 import sys
 from pathlib import Path
@@ -12,7 +14,7 @@ CONSOLE_FORMAT = "[%(asctime)s] (%(name)s)  %(levelname)s: %(message)s"
 
 def get_logger(
     name: str,
-    console_level: int = logging.INFO,
+    console_level: int = int(os.getenv("COMPSYN_LOG_LEVEL", logging.INFO)),
     log_file: Optional[Path] = None,
     file_level: int = logging.DEBUG,
 ) -> logging.Logger:

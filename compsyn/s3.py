@@ -7,6 +7,7 @@ from pathlib import Path
 import boto3
 
 from .logger import get_logger
+from .utils import env_default
 
 
 class S3Error(Exception):
@@ -25,35 +26,35 @@ def get_s3_args(
     s3_parser.add_argument(
         "--s3-bucket",
         type=str,
-        default=os.getenv("COMPSYN_S3_BUCKET", None),
+        action=env_default("COMPSYN_S3_BUCKET"),
         help="bucket where img data is stored in S3",
     )
     s3_parser.add_argument(
         "--s3-region-name",
         type=str,
-        default=os.getenv("COMPSYN_S3_REGION_NAME", None),
+        action=env_default("COMPSYN_S3_REGION_NAME"),
         help="S3 region",
     )
     s3_parser.add_argument(
         "--s3-endpoint-url",
-        default=os.getenv("COMPSYN_S3_ENDPOINT", None),
+        action=env_default("COMPSYN_S3_ENDPOINT_URL"),
+        required=False,
         help="S3 endpoint URL (only required for non-AWS S3)",
     )
     s3_parser.add_argument(
         "--s3-access-key-id",
         type=str,
-        default=os.getenv("COMPSYN_S3_ACCESS_KEY_ID", None),
+        action=env_default("COMPSYN_S3_ACCESS_KEY_ID"),
         required=True,
     )
     s3_parser.add_argument(
         "--s3-secret-access-key",
         type=str,
-        default=os.getenv("COMPSYN_S3_SECRET_ACCESS_KEY", None),
+        action=env_default("COMPSYN_S3_SECRET_ACCESS_KEY"),
         required=True,
     )
 
     return parser
-
 
 
 def get_s3_client(args: argparse.Namespace) -> botocore.clients.s3:
@@ -80,10 +81,38 @@ def s3_object_exists(s3_path: Path) -> bool:
 
     try:
         s3_client.get_object(Bucket=s3_args.s3_bucket, Key=str(s3_path))
-        if not overwrite:
-            return True
+        return True
     except s3_client.exceptions.NoSuchKey:
         return False
+
+
+class NoS3DataError(Exception):
+    pass
+
+
+def list_object_paths_in_s3(s3_prefix: Path) -> Generator[Path]:
+
+    s3_args, unknown = get_s3_args().parse_known_args()
+    s3_client = get_s3_client(s3_args)
+    log = get_logger("list_object_paths_in_s3")
+
+    resp = s3_client.list_objects_v2(Bucket=s3_args.s3_bucket, Prefix=str(s3_prefix))
+
+    if "Contents" not in resp:
+        raise NoS3DataError(f"No data at prefix {s3_prefix}")
+
+    while True:
+        yield from (Path(obj["Key"]) for obj in resp["Contents"])
+
+        if resp["IsTruncated"]:
+            continuation_key = resp["NextContinuationToken"]
+            resp = s3_client.list_objects_v2(
+                Bucket=s3_args.s3_bucket,
+                Prefix=str(s3_prefix),
+                ContinuationToken=continuation_key,
+            )
+        else:
+            break
 
 
 def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) -> None:
@@ -96,7 +125,7 @@ def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) 
         # only write files to s3 that don't already exist unless overwrite is passed
         if s3_object_exists(s3_path) and not overwrite:
             log.debug(
-                f"s3://{s3_bucket}/{object_path} already exists in s3, not overwriting"
+                f"s3://{s3_args.s3_bucket}/{s3_path} already exists in s3, not overwriting"
             )
             return
 

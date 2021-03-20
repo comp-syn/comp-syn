@@ -23,18 +23,18 @@ def rgb_array_to_jzazbz_array(rgb_array):
     Returns:
         jzazbz_array (array): matrix of JzAzBz pixel values
     """
-    r = rgb_arrays[:,:,0].reshape([-1])
-    g = rgb_arrays[:,:,1].reshape([-1])
-    b = rgb_arrays[:,:,2].reshape([-1])
-    jzazbz_vals = test_jzazbz_array[r,g,b]
-    jzazbz_array = jzazbz_vals.reshape(list(rgb_arrays.shape[:3])).transpose([0,1,2])
+    r = rgb_array[:, :, 0].reshape([-1])
+    g = rgb_array[:, :, 1].reshape([-1])
+    b = rgb_array[:, :, 2].reshape([-1])
+    jzazbz_vals = test_jzazbz_array[r, g, b]
+    jzazbz_array = jzazbz_vals.reshape(list(rgb_array.shape[:3])).transpose([0, 1, 2])
     return jzazbz_array
 
 
 class ImageData:
     def __init__(self, **kwargs):
-        self.rgb_dict = defaultdict(lambda: None)
-        self.jzazbz_dict = defaultdict(lambda: None)
+        self.rgb_dict = defaultdict(None)
+        self.jzazbz_dict = defaultdict(None)
         self.labels_list = []
         self.dims = None
         self.log = get_logger(__class__.__name__)
@@ -51,7 +51,7 @@ class ImageData:
             self.log.error(f"No subfolders found {folders}")
         for folder in folders:
             fp = os.path.join(path, folder)
-            self.log.info(fp)
+            self.log.info(f"loading from folder {fp}")
             assert os.path.isdir(fp)
             self.load_image_dict_from_folder(
                 fp, label=label, compress_dims=compress_dims
@@ -66,12 +66,13 @@ class ImageData:
         compress_dims = self.dims if self.dims else compress_dims
         self.dims = compress_dims
         path = os.path.realpath(path)
-        label = label or path.split("/")[-1]
+        if label is None:
+            label = path.split("/")[-1]
         files = os.listdir(path)
         imglist = []
         arraylist = []
-        for file in files:
-            fp = os.path.join(path, file)
+        for f in files:
+            fp = os.path.join(path, f)
             img = None
             try:
                 img = self.load_rgb_image(fp, compress_dims=compress_dims)
@@ -80,9 +81,10 @@ class ImageData:
             if img is not None:
                 imglist.append(img)
 
+        self.log.debug(f'loaded {len(imglist)} images for "{label}"')
+        self.rgb_dict[label] = imglist
         if compute_jzazbz:
             self.store_jzazbz_from_rgb(label)
-        self.rgb_dict[label] = imglist
         self.labels_list = list(self.rgb_dict.keys())
 
     def load_image_continuum_from_folder(
@@ -141,19 +143,15 @@ class ImageData:
                 pass
 
     def store_jzazbz_from_rgb(self, labels=None):
-        if labels:
+        if labels is not None:
             labels = labels if isinstance(labels, list) else [labels]
         else:
             labels = list(self.rgb_dict.keys())
+        self.log.debug(f"creating jzazbz arrays from rgb arrays for {labels}")
         for label in labels:
-            if label and label in self.rgb_dict.keys():
-                try:
-                    self.jzazbz_dict[label] = [
-                        rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
-                    ]
-                except:
-
-                    pass
+            self.jzazbz_dict[label] = [
+                rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
+            ]
 
     def print_labels(self):
         self.labels_list = list(self.rgb_dict.keys())

@@ -18,7 +18,15 @@ class Trial:
     This also facilitates multiple hosts contributing to a shared effort and timeseries
     experiments.
     """
-    def __init__(self, experiment_name: str, trial_id: str, hostname: Optional[str], trial_timestamp: Optional[str], work_dir: Optional[Path]) -> None:
+
+    def __init__(
+        self,
+        experiment_name: str,
+        trial_id: str,
+        hostname: Optional[str],
+        trial_timestamp: Optional[str],
+        work_dir: Optional[Path],
+    ) -> None:
 
         #: An over-arching experiment_name can be used to facilitate multi-trial data collection efforts
         self.experiment_name = experiment_name

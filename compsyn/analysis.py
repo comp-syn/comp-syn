@@ -99,6 +99,7 @@ class ImageAnalysis:
         if labels == "default":
             labels = self.labels_list
         labels = labels if isinstance(labels, list) else [labels]
+        self.log.debug(f"compute_color_distributions for {labels}")
         self.jzazbz_dist_dict, self.hsv_dist_dict = {}, {}
         self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
         color_rep = [i.lower() for i in color_rep]

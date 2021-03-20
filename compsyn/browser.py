@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .utils import env_default
 
+
 def get_browser_args(
     parser: Optional[argparse.ArgumentParser] = None,
 ) -> argparse.ArgumentParser:
@@ -28,8 +29,7 @@ def get_browser_args(
         type=str,
         action=env_default("COMPSYN_DRIVER_PATH"),
         required=True,
-        help="Browser driver path"
+        help="Browser driver path",
     )
-
 
     return parser

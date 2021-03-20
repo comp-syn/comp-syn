@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import pickle
 from pathlib import Path
 
+from .logger import get_logger
 from .trial import Trial, get_trial_from_env
 from .s3 import upload_file_to_s3, download_file_from_s3, s3_object_exists
 
@@ -18,13 +20,14 @@ class BadPickleError(Exception):
     pass
 
 
-def load_pickle(filename: Union[str, Path]) -> Any:
+def load_vector_pickle(filename: Union[str, Path]) -> Any:
     """
     load a saved pickle
     """
     with open(filename, "rb") as f:
         obj = pickle.load(f)
-        return pickle.load(f)
+        get_logger("load_pickle").info(f"loaded pickle from {filename}")
+        return obj
 
 
 # Abstract Base Class
@@ -74,19 +77,39 @@ class Vector:
             .joinpath("w2cv.pickle")
         )
 
-    #@abstractmethod
+    # @abstractmethod
     def run_analysis(self, **kwargs) -> None:
         # run analysis from folder of local data, populating attributes of the Vector object
         pass
 
-    def save(self):
+    def load(self) -> Vector:
+        """
+        Load and return a vector from a pickle file
+        """
+        if not self._local_pickle_path.is_file():
+            raise FileNotFoundError(self._local_pickle_path)
+
+        obj = load_vector_pickle(self._local_pickle_path)
+        if not isinstance(obj, self.__class__):
+            raise BadPickleError(
+                f"{obj.__class__.__name__} loaded from pickle is not a {self.__class__}."
+            )
+
+        # bad idea to replace self like this?
+        self.__dict__.update(obj.__dict__)
+
+    def save(self) -> None:
         """
         save a Vector as a pickle
         """
+        self._local_pickle_path.parent.mkdir(exist_ok=True, parents=True)
         with open(self._local_pickle_path, "wb") as f:
             pickle.dump(self, f)
+        self.log.info(
+            f"saved {round(self._local_pickle_path.stat().st_size / 1048576)}MB pickle to {self._local_pickle_path}"
+        )
 
-    def pull(self, overwrite: bool, **kwargs) -> None:
+    def pull(self, overwrite: bool = False, **kwargs) -> None:
         """
         Optional remote Backend integration point
         Subclasses of Vector should call super().pull(**kwargs) if they extend pull
@@ -98,13 +121,9 @@ class Vector:
         download_file_from_s3(
             local_path=self._local_pickle_path, s3_path=self.vector_pickle_path,
         )
-        obj = load_pickle(self._local_pickle_path)
-        if not isinstance(obj, self.__class__):
-            raise BadPickleError(f"{obj} loaded from pickle is not a {self.__class__}.")
-        # bad idea to replace self like this?
-        self.__dict__.update(obj.__dict__)
+        self.load()
 
-    def push(self, overwrite: bool, **kwargs) -> None:
+    def push(self, overwrite: bool = False, **kwargs) -> None:
         """
         Optional remote Backend integration point
         Subclasses of Vector should call super().push(**kwargs) if they extend push

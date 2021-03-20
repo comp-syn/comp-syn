@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from pytest import approx
@@ -8,90 +9,54 @@ from compsyn.wordtocolor_vector import WordToColorVector
 from compsyn.trial import Trial
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_w2cv_produce_known_analysis_results():
     """
 	creates vector object for the saved love image set and tests distributions and ratios.
 	"""
 
-    path = os.getcwd() + "/downloads/paper_categories"
-    w2cv = WordToColorVector(label="love")
-
-    expected_rgb_dist = [
-        1.40895633e-07,
-        7.41199147e-09,
-        8.63679137e-11,
-        5.33250120e-09,
-        1.23785039e-07,
-        1.61645538e-08,
-        2.79873735e-08,
-        1.60805576e-07,
-    ]
-    expected_jzazbz_dist = [
-        43.70086125,
-        82.88902835,
-        20.36144642,
-        207.55729541,
-        11.45945804,
-        131.10485973,
-        10.49319587,
-        334.18735373,
-    ]
-    expected_rgb_ratio = [0.43899919, 0.27914204, 0.28185877]
-
-    assert expected_rgb_dist[0] == approx(w2cv.rgb_dist[0], rel=1e-6, abs=1e-12)
-    assert expected_jzazbz_dist[0] == approx(w2cv.jzazbz_dist[0], rel=1e-6, abs=1e-12)
-    assert expected_rgb_ratio[0] == approx(w2cv.rgb_ratio[0], rel=1e-6, abs=1e-12)
+    trial = Trial(
+        experiment_name="test-downloads",
+        trial_id="known-dist",
+        hostname="pytester",
+        trial_timestamp="testoclock",
+        work_dir=Path(__file__).parent.joinpath("test-assets")
+    )
+    w2cv = WordToColorVector(label="atlantis", trial=trial)
+    w2cv.run_analysis()
 
 
-class InvalidWordToColorVectorError(Exception):
-    pass
+    expected_rgb_dist = [1.89736450e-07, 6.40508963e-08, 4.61866761e-09, 8.04098130e-08,
+ 1.60031875e-08, 1.87863849e-09, 1.86990891e-08, 1.07072293e-07]
+    expected_jzazbz_dist = [243.92783389, 172.05688373,   3.19593217,  54.89909299, 151.00108506,
+ 148.22235232,   3.8768293,   64.57348934]
+    expected_rgb_ratio = [0.24078636, 0.35787702, 0.40133662]
 
-
-def validate_w2cv(w2cv: WordToColorVector) -> None:
-    # TODO analysis results exist and are the right shape?
-    pass
+    for i, v in enumerate(expected_rgb_dist):
+        assert v == approx(w2cv.rgb_dist[i], rel=1e-6, abs=1e-12)
+    for i, v in enumerate(expected_jzazbz_dist):
+        assert v == approx(w2cv.jzazbz_dist[i], rel=1e-6, abs=1e-12)
+    for i, v in enumerate(expected_rgb_ratio):
+        assert v == approx(w2cv.rgb_ratio[i], rel=1e-6, abs=1e-12)
 
 
 @pytest.mark.integration
 def test_w2cv_fresh_run():
-    w2cv = WordToColorVector(label="dog")
+    w2cv = WordToColorVector(label="dog", revision="raw-test")
     w2cv.run_image_capture()
-    w2cv.create_embedding()
-
-    # TODO fresh raw images were downloaded?
-
-    validate_w2cv(w2cv)
+    w2cv.run_analysis()
+    w2cv.save()
 
 
 @pytest.mark.integration
-def test_w2cv_s3_integration():
-    try:
-        get_s3_client()
-    except Exception as exc:
-        print(exc)
-        print(
-            "s3 error, configure S3 environment variables according to compsyn.s3.get_s3_args to test this feature"
-        )
+def test_w2cv_s3_push():
+    w2cv = WordToColorVector(label="dog", revision="raw-test")
+    w2cv.load()
+    w2cv.push(include_raw_images=True, overwrite=True)
 
-    # first test push integration
-    trial = Trial(
-        experiment_name="compsyn-integration-test",
-        trial_id="test-s3-integration",
-        hostname="compsyn",
-    )
 
-    w2cv = WordToColorVector(label="seaborne", revision="test", trial=trial)
-    w2cv.run_image_capture()
-    w2cv.create_embedding()
-
-    w2cv.push(overwrite=True)
-
-    # then, test pulling what we just pushed
-
-    del w2cv
-
-    w2cv = WordToColorVector(label="seaborne", revision="test", trial=trial)
-    w2cv.pull()
-
-    validate_w2cv(w2cv)
+@pytest.mark.integration
+def test_w2cv_s3_pull():
+    w2cv = WordToColorVector(label="dog", revision="raw-test")
+    w2cv.pull(include_raw_images=True, overwrite=True)
+    w2cv.run_analysis()

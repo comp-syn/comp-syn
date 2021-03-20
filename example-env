@@ -1,7 +1,0 @@
-export COMPSYN_EXPERIMENT_NAME=default-experiment
-export COMPSYN_TRIAL_ID=local-trial
-export COMPSYN_HOSTNAME=${HOSTNAME}
-export COMPSYN_TRIAL_TIMESTAMP=$(date +%Y-%m-%d)
-export COMPSYN_DRIVER_BROWSER=Firefox
-export COMPSYN_DRIVER_PATH=/usr/local/bin/geckodriver
-export COMPSYN_WORK_DIR=/Volumes/LACIE/compsyn/data/zth
