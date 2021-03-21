@@ -4,7 +4,7 @@ import pickle
 from pathlib import Path
 
 from .logger import get_logger
-from .trial import Trial, get_trial_from_env
+from .trial import Trial, get_trial
 from .s3 import upload_file_to_s3, download_file_from_s3, s3_object_exists
 from .utils import human_bytes
 
@@ -55,7 +55,7 @@ class Vector:
         #: metadata to associate with results can be configured through a Trial dataclass
         if trial is None:
             # default to getting trial metadata from the environment
-            self.trial = get_trial_from_env()
+            self.trial = get_trial()
         else:
             self.trial = trial
         #: track whether the information the vector represents is locally available as attributes

@@ -27,11 +27,13 @@ def get_s3_args(
         "--s3-bucket",
         type=str,
         action=env_default("COMPSYN_S3_BUCKET"),
+        required=False,
         help="bucket where img data is stored in S3",
     )
     s3_parser.add_argument(
         "--s3-region-name",
         type=str,
+        required=False,
         action=env_default("COMPSYN_S3_REGION_NAME"),
         help="S3 region",
     )
@@ -45,13 +47,13 @@ def get_s3_args(
         "--s3-access-key-id",
         type=str,
         action=env_default("COMPSYN_S3_ACCESS_KEY_ID"),
-        required=True,
+        required=False,
     )
     s3_parser.add_argument(
         "--s3-secret-access-key",
         type=str,
         action=env_default("COMPSYN_S3_SECRET_ACCESS_KEY"),
-        required=True,
+        required=False,
     )
 
     return parser

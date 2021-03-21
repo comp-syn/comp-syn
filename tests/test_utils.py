@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use("seaborn-whitegrid")
 
-from compsyn.utils import compress_image
+from compsyn.utils import compress_image, set_env_var
 
 
 @pytest.mark.unit
@@ -44,3 +45,25 @@ def test_compress_image() -> None:
     # Clean up
     for cip in compressed_image_paths:
         cip.unlink()
+
+
+@pytest.mark.unit
+def test_set_env_var() -> None:
+    env_var_key_a = "COMPSYN_PYTEST_ENV_VAR_A"
+    env_var_key_a_code = "pytest_env_var_a"
+    env_var_key_b = "COMPSYN_PYTEST_ENV_VAR_B"
+    env_var_val_1 = "value-1"
+    env_var_val_2 = "value-2"
+    existing_env_var = os.getenv(env_var_key_a)
+
+    assert existing_env_var is None, "unset \"{env_var_key_a}\" before running tests"
+
+    set_env_var(env_var_key_a, env_var_val_1)
+
+    assert os.getenv(env_var_key_a) == env_var_val_1
+
+    set_env_var(env_var_key_a, env_var_val_2)
+    set_env_var(env_var_key_b, env_var_val_1)
+
+    assert os.getenv(env_var_key_a) == env_var_val_2
+    assert os.getenv(env_var_key_b) == env_var_val_1
