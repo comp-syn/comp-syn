@@ -13,3 +13,4 @@ geckodriver.log
 no-experiment-name
 .DS_Store
 shared-env
+.coverage*

@@ -33,6 +33,7 @@ requests = "^2.23.0"
 gensim = "^3.8.3"
 memory_profiler = "^0.57.0"
 pytest = "^6.2.2"
+pytest-cov = "^2.11.1"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

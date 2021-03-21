@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .logger import get_logger
 from .trial import Trial, get_trial
-from .s3 import upload_file_to_s3, download_file_from_s3, s3_object_exists
+from .s3 import upload_file_to_s3, download_file_from_s3, s3_object_exists, NoObjectInS3Error
 from .utils import human_bytes
 
 

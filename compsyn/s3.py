@@ -13,6 +13,9 @@ from .utils import env_default
 class S3Error(Exception):
     pass
 
+class NoObjectInS3Error(S3Error):
+    pass
+
 
 def get_s3_args(
     parser: Optional[argparse.ArgumentParser] = None,

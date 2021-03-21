@@ -5,6 +5,7 @@ import argparse
 import os
 
 from .logger import get_logger
+from .helperfunctions import get_browser_args
 from .s3 import get_s3_args
 from .jzazbz import get_jzazbz_args
 from .trial import get_trial_args
@@ -49,6 +50,7 @@ class CompsynConfig:
         parser = argparse.ArgumentParser()
         get_trial_args(parser)
         get_jzazbz_args(parser)
+        get_browser_args(parser)
         get_s3_args(parser)
         args, unknown = parser.parse_known_args()
         return vars(args)

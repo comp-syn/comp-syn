@@ -16,8 +16,7 @@ import matplotlib.pyplot as plt
 from .datahelper import ImageData, rgb_array_to_jzazbz_array
 from .analysis import ImageAnalysis
 from .vector import Vector
-from .browser import get_browser_args
-from .helperfunctions import search_and_download
+from .helperfunctions import get_browser_args, search_and_download
 from .logger import get_logger
 from .s3 import upload_file_to_s3, download_file_from_s3, list_object_paths_in_s3
 from .utils import compress_image

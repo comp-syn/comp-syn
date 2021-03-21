@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import datetime
 import hashlib
 import io
@@ -13,12 +14,43 @@ import requests
 import time
 from collections import defaultdict
 
+from pathlib import Path
+
 from PIL import Image, UnidentifiedImageError
 from google.cloud import vision_v1p2beta1 as vision
 import selenium
 from selenium import webdriver
 
 from .logger import get_logger
+from .utils import env_default
+
+
+def get_browser_args(
+    parser: Optional[argparse.ArgumentParser] = None,
+) -> argparse.ArgumentParser:
+
+    if parser is None:
+        parser = argparse.ArgumentParser()
+
+    browser_parser = parser.add_argument_group("browser")
+
+    browser_parser.add_argument(
+        "--driver-browser",
+        type=str,
+        action=env_default("COMPSYN_DRIVER_BROWSER"),
+        default="Firefox",
+        help="Browser name, e.g. Firefox, Chrome",
+    )
+
+    browser_parser.add_argument(
+        "--driver-path",
+        type=str,
+        action=env_default("COMPSYN_DRIVER_PATH"),
+        default="/usr/local/bin/geckodriver",
+        help="Browser driver path",
+    )
+
+    return parser
 
 
 def get_webdriver(
