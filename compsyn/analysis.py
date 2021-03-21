@@ -96,7 +96,9 @@ class ImageAnalysis:
         Returns:
             self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
         """
-        assert self.image_data.compress_dims is not None, "Must set compress_dims on ImageData to carry out analysis"
+        assert (
+            self.image_data.compress_dims is not None
+        ), "Must set compress_dims on ImageData to carry out analysis"
         if labels == "default":
             labels = self.labels_list
         labels = labels if isinstance(labels, list) else [labels]
@@ -120,7 +122,12 @@ class ImageAnalysis:
                     dist = np.ravel(
                         np.histogramdd(
                             np.reshape(
-                                imageset[i][:, :, :], (self.image_data.compress_dims[0] * self.image_data.compress_dims[1], num_channels)
+                                imageset[i][:, :, :],
+                                (
+                                    self.image_data.compress_dims[0]
+                                    * self.image_data.compress_dims[1],
+                                    num_channels,
+                                ),
                             ),
                             bins=(
                                 np.linspace(
@@ -188,7 +195,14 @@ class ImageAnalysis:
                     rgb.append([r / tot, g / tot, b / tot])
                     dist = np.ravel(
                         np.histogramdd(
-                            np.reshape(imageset[i], (self.image_data.compress_dims[0] * self.image_data.compress_dims[1], num_channels)),
+                            np.reshape(
+                                imageset[i],
+                                (
+                                    self.image_data.compress_dims[0]
+                                    * self.image_data.compress_dims[1],
+                                    num_channels,
+                                ),
+                            ),
                             bins=(
                                 np.linspace(
                                     0,

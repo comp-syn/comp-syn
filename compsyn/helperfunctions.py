@@ -13,8 +13,9 @@ import requests
 import time
 from collections import defaultdict
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from google.cloud import vision_v1p2beta1 as vision
+import selenium
 from selenium import webdriver
 
 from .logger import get_logger
@@ -156,19 +157,22 @@ def fetch_image_urls(
                     image_url = actual_image.get_attribute("src")
                     if image_url not in image_urls:
                         # only count if we could actually download an image
-                        image_count += 1 
+                        image_count += 1
                     image_urls.add(image_url)
                     if image_count >= number_of_links_to_fetch:
-                        log.info(f"Found: {len(image_urls)}/{image_count} image links, done!")
+                        log.info(
+                            f"Found: {len(image_urls)}/{image_count} image links, done!"
+                        )
                         return image_urls
 
-        
         log.info(f"Found: {image_count} usable image links, looking for more ...")
         scroll_to_end(wd)
 
         # look for the More Results or Load More Anyway button, preferring the latter as it is conditional
         try:
-            see_more_anyway_button = wd.find_element_by_css_selector(see_more_anyway_css)
+            see_more_anyway_button = wd.find_element_by_css_selector(
+                see_more_anyway_css
+            )
         except selenium.common.exceptions.NoSuchElementException:
             see_more_anyway_button = None
 
@@ -177,11 +181,13 @@ def fetch_image_urls(
         except selenium.common.exceptions.NoSuchElementException:
             load_more_button = None
 
-        if see_more_anyway_button:
+        if see_more_anyway_button is not None:
             # prefer this one
-            wd.execute_script(f"document.querySelector('{see_more_anyway_css}').click();")
+            wd.execute_script(
+                f"document.querySelector('{see_more_anyway_css}').click();"
+            )
             log.debug(f"clicked See More Anyway ({see_more_anyway_css})")
-        elif load_more_button:
+        elif load_more_button is not None:
             wd.execute_script(f"document.querySelector('{load_more_css}').click();")
             log.debug(f"clicked Load More ({load_more_css})")
         else:
@@ -195,6 +201,10 @@ def fetch_image_urls(
         results_start = len(thumbnail_results)
 
 
+class UnexpectedHTMLResponseFromImgSrcError(Exception):
+    pass
+
+
 def save_image(folder_path: str, url: str) -> None:
 
     """
@@ -205,10 +215,18 @@ def save_image(folder_path: str, url: str) -> None:
 
     log = get_logger("save_image")
 
-    image_content = requests.get(url).content
+    resp = requests.get(url)
+    image_content = resp.content
 
     image_file = io.BytesIO(image_content)
-    image = Image.open(image_file).convert("RGB")
+    try:
+        image = Image.open(image_file).convert("RGB")
+    except UnidentifiedImageError as exc:
+        if "text/html" in resp.headers["content-type"]:
+            raise UnexpectedHTMLResponseFromImgSrcError() from exc
+        else:
+            raise
+
     file_path = os.path.join(
         folder_path, hashlib.sha1(image_content).hexdigest()[:10] + ".jpg"
     )
@@ -238,9 +256,14 @@ def search_and_download(
        number_images: number of images to download for each query
        sleep_time: general rate of sleep activity (lower values raise red flags for Google)
     """
+    log = get_logger("search_and_download")
 
     if not os.path.exists(target_path):
         os.makedirs(target_path)
+
+    log.debug(
+        f"starting {driver_browser} webdriver at {driver_executable_path} with {driver_options}"
+    )
 
     with get_webdriver(
         driver_browser=driver_browser,
@@ -258,9 +281,14 @@ def search_and_download(
         except Exception as e:
             errors[e].append(url)
 
-        if len(errors) > 0:
-            get_logger("search_and_download").warning(f"{len(errors)} images could not be downloaded from the scraped URLs: {errors}")
+    if len(errors) > 0:
+        log.warning(
+            f"{len(errors)} images could not be downloaded from the scraped URLs: {errors}"
+        )
 
+    log.info(
+        f"{len(urls) - len(errors)}/{number_images} images successfully downloaded"
+    )
 
     wd.quit()
 

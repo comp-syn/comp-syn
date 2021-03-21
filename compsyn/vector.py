@@ -6,6 +6,7 @@ from pathlib import Path
 from .logger import get_logger
 from .trial import Trial, get_trial_from_env
 from .s3 import upload_file_to_s3, download_file_from_s3, s3_object_exists
+from .utils import human_bytes
 
 
 class VectorNotGeneratedError(Exception):
@@ -48,7 +49,7 @@ class Vector:
         self.label = label
         #: optional revision string to use for saving to a shared backend
         if revision is None:
-            self.revision = "unnamed-revision"
+            self.revision = "unnamed"
         else:
             self.revision = revision
         #: metadata to associate with results can be configured through a Trial dataclass
@@ -59,10 +60,11 @@ class Vector:
             self.trial = trial
         #: track whether the information the vector represents is locally available as attributes
         self._attributes_available: bool = False
+
+    @property
+    def _local_pickle_path(self) -> Path:
         #: local path for saving and loading from a pickle
-        self._local_pickle_path: Path = self.trial.work_dir.joinpath(
-            self.vector_pickle_path
-        )
+        return self.trial.work_dir.joinpath(self.vector_pickle_path)
 
     @property
     def vector_pickle_path(self) -> Path:
@@ -106,7 +108,7 @@ class Vector:
         with open(self._local_pickle_path, "wb") as f:
             pickle.dump(self, f)
         self.log.info(
-            f"saved {round(self._local_pickle_path.stat().st_size / 1048576)}MB pickle to {self._local_pickle_path}"
+            f"saved {human_bytes(self._local_pickle_path.stat().st_size)} pickle to {self._local_pickle_path}"
         )
 
     def pull(self, overwrite: bool = False, **kwargs) -> None:

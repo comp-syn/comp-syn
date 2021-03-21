@@ -43,3 +43,11 @@ def compress_image(image_path: Path) -> Path:
     image.save(compressed_image_path, optimize=True, quality=30)
 
     return compressed_image_path
+
+
+def human_bytes(num, suffix="B"):
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, "Yi", suffix)

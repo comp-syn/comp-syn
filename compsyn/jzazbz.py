@@ -7,6 +7,7 @@ import numpy as np
 from .utils import env_default
 from .logger import get_logger
 
+
 def get_jzazbz_args(
     parser: Optional[argparse.ArgumentParser] = None,
 ) -> argparse.ArgumentParser:
@@ -21,15 +22,19 @@ def get_jzazbz_args(
         type=str,
         action=env_default("COMPSYN_JZAZBZ_ARRAY"),
         default="jzazbz_array.npy",
-        help="Path to jzazbz_array.npy file"
+        help="Path to jzazbz_array.npy file",
     )
 
     return parser
+
 
 def setup_jzazbz_array() -> None:
     jzazbz_args, unknown = get_jzazbz_args().parse_known_args()
     global JZAZBZ_ARRAY_NPY
     JZAZBZ_ARRAY_NPY = np.load(jzazbz_args.jzazbz_array)
-    get_logger("setup_globals").debug(f"jzazbz transformation will use {jzazbz_args.jzazbz_array}")
+    get_logger("setup_globals").debug(
+        f"jzazbz transformation will use {jzazbz_args.jzazbz_array}"
+    )
+
 
 setup_jzazbz_array()

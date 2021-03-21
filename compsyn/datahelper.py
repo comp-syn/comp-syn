@@ -45,9 +45,7 @@ class ImageData:
         self.compress_dims = compress_dims
         self.log = get_logger(__class__.__name__)
 
-    def load_image_dict_from_subfolders(
-        self, path, label=None
-    ):
+    def load_image_dict_from_subfolders(self, path, label=None):
         assert os.path.isdir(path)
         path = os.path.realpath(path)
         folders = os.listdir(path)
@@ -57,16 +55,13 @@ class ImageData:
             fp = os.path.join(path, folder)
             self.log.info(f"loading from folder {fp}")
             assert os.path.isdir(fp)
-            self.load_image_dict_from_folder(
-                fp, label=label
-            )
+            self.load_image_dict_from_folder(fp, label=label)
             self.store_jzazbz_from_rgb(label)
         self.labels_list = list(self.rgb_dict.keys())
 
-    def load_image_dict_from_folder(
-        self, path, label=None, compute_jzazbz=True
-    ):
-        assert os.path.isdir(path), f"{path} must be a directory"
+    def load_image_dict_from_folder(self, path, label=None, compute_jzazbz=True):
+        if not os.path.isdir(path):
+            raise FileNotFoundError(f"the data directory {path} does not exist")
         path = os.path.realpath(path)
         if label is None:
             label = path.split("/")[-1]
@@ -130,9 +125,7 @@ class ImageData:
                 img_raw = PIL.Image.open(path)
                 if self.compress_dims:
                     assert len(self.compress_dims) == 2
-                    img_raw = img_raw.resize(
-                        self.compress_dims, PIL.Image.ANTIALIAS
-                    )
+                    img_raw = img_raw.resize(self.compress_dims, PIL.Image.ANTIALIAS)
                 img_array = np.array(img_raw)[:, :, :3]
 
                 assert len(img_array.shape) == 3 and img_array.shape[-1] == 3
@@ -140,7 +133,9 @@ class ImageData:
             except Exception as exc:
                 raise ImageLoadingError(f"while loading {path}") from exc
 
-    def store_jzazbz_from_rgb(self, labels: Optional[Union[str, List[str]]] = None) -> None:
+    def store_jzazbz_from_rgb(
+        self, labels: Optional[Union[str, List[str]]] = None
+    ) -> None:
         """
         Creates the jzazbz array from the rgb array
         """

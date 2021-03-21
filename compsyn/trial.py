@@ -24,8 +24,8 @@ class Trial:
         experiment_name: str,
         trial_id: str,
         hostname: Optional[str],
-        trial_timestamp: Optional[str],
-        work_dir: Optional[Path],
+        trial_timestamp: Optional[str] = None,
+        work_dir: Optional[Path] = None,
     ) -> None:
 
         #: An over-arching experiment_name can be used to facilitate multi-trial data collection efforts
@@ -42,10 +42,12 @@ class Trial:
         self.trial_timestamp = trial_timestamp
         #: The local root working directory
         if work_dir is None:
-            work_dir = tempfile.TemporaryDirectory().name
-            get_logger(self.__class__.__name__).warning(
-                f"no work_dir passed, using a temporary directory: {work_dir}"
-            )
+            work_dir = os.getenv("COMPSYN_WORK_DIR")
+            if work_dir is None:
+                work_dir = tempfile.TemporaryDirectory().name
+                get_logger(self.__class__.__name__).warning(
+                    f"no work_dir passed, using a temporary directory: {work_dir}"
+                )
         self.work_dir = Path(work_dir)
 
         self.log = get_logger(self.__class__.__name__)
@@ -53,6 +55,9 @@ class Trial:
         self.log.info(f"experiment: {self.experiment_name}")
         self.log.info(f"trial_id: {self.trial_id}")
         self.log.info(f"hostname: {self.hostname}")
+
+    def __repr__(self) -> str:
+        return f"{self.experiment_name}/{self.trial_id}/{self.hostname}"
 
 
 def get_trial_from_env() -> Trial:

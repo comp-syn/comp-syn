@@ -27,11 +27,27 @@ class WordToColorVector(Vector):
     # Generated from a set of images' average color
     def __init__(self, number_of_images: Optional[int] = 100, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._attributes_available: bool = False
+        self.image_analysis: Union[None, ImageAnalysis] = None
         self.number_of_images = number_of_images
         self.log = get_logger(self.__class__.__name__)
-        self.log.info(f"local downloads: {self.raw_images_path}")
         self._local_raw_images_path = self.trial.work_dir.joinpath(self.raw_images_path)
+        self.log.debug(f"local downloads: {self._local_raw_images_path}")
+
+    def __repr__(self) -> str:
+        """ Nice looking representation """
+        output = f"{self.__class__.__name__}({self.label}) for {self.trial}"
+        if len(list(self._local_raw_images_path.iterdir())) == 0:
+            output += " (no local raw data)"
+
+        try:
+            output += f"\n\tjzazbz_dist = {json.dumps(self.jzazbz_dist.tolist())}"
+            output += (
+                f"\n\tjzazbz_dist_std = {json.dumps(self.jzazbz_dist_std.tolist())}"
+            )
+        except AttributeError:
+            pass
+
+        return output
 
     @property
     def raw_images_path(self) -> Path:
@@ -45,26 +61,28 @@ class WordToColorVector(Vector):
 
     def run_analysis(self, **kwargs) -> None:
 
-        self.img_data = ImageData()
-        self.img_data.load_image_dict_from_folder(
+        self.image_data = ImageData()
+        self.image_data.load_image_dict_from_folder(
             path=self._local_raw_images_path, label=self.label, **kwargs
         )
 
-        self.img_analysis = ImageAnalysis(self.img_data)
-        self.img_analysis.compute_color_distributions(self.label, ["jzazbz", "rgb"])
-        self.img_analysis.get_composite_image()
+        self.image_analysis = ImageAnalysis(self.image_data)
+        self.image_analysis.compute_color_distributions(self.label, ["jzazbz", "rgb"])
+        self.image_analysis.get_composite_image()
 
-        self.jzazbz_vector = np.mean(self.img_analysis.jzazbz_dict[self.label], axis=0)
-        self.jzazbz_composite_dists = self.img_analysis.jzazbz_dist_dict[self.label]
+        self.jzazbz_vector = np.mean(
+            self.image_analysis.jzazbz_dict[self.label], axis=0
+        )
+        self.jzazbz_composite_dists = self.image_analysis.jzazbz_dist_dict[self.label]
         self.jzazbz_dist = np.mean(self.jzazbz_composite_dists, axis=0)
 
         self.jzazbz_dist_std = np.std(self.jzazbz_composite_dists, axis=0)
 
-        self.rgb_vector = np.mean(self.img_analysis.rgb_dict[self.label], axis=0)
-        self.rgb_dist = np.mean(self.img_analysis.rgb_dist_dict[self.label], axis=0)
-        self.rgb_ratio = np.mean(self.img_analysis.rgb_ratio_dict[self.label], axis=0)
+        self.rgb_vector = np.mean(self.image_analysis.rgb_dict[self.label], axis=0)
+        self.rgb_dist = np.mean(self.image_analysis.rgb_dist_dict[self.label], axis=0)
+        self.rgb_ratio = np.mean(self.image_analysis.rgb_ratio_dict[self.label], axis=0)
 
-        self.colorgram_vector = self.img_analysis.compressed_img_dict[self.label]
+        self.colorgram_vector = self.image_analysis.compressed_img_dict[self.label]
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
 
@@ -117,8 +135,8 @@ class WordToColorVector(Vector):
         to_be_saved = copy.deepcopy(self)
         did_clean = False
         for del_attr in [
-            "img_analysis",
-            "img_data",
+            "image_analysis",
+            "image_data",
             "jzazbz_composite_dists",
             "jzazbz_vector",
             "rgb_vector",
@@ -178,12 +196,12 @@ class WordToColorVector(Vector):
         super().pull(**kwargs)
         if include_raw_images:
             # pull raw images
-            self.log.info(f"pushing raw images (ovewrite={overwrite})...")
+            self.log.info(f"pulling raw images (ovewrite={overwrite})...")
             s3_paths = list(list_object_paths_in_s3(s3_prefix=self.raw_images_path))
             start = time.time()
             func = partial(self._threaded_s3_download, overwrite=overwrite)
             with ThreadPool(processes=os.getenv("COMPSYN_THREAD_POOL_SIZE", 4)) as pool:
                 pool.map(func, s3_paths)
             self.log.info(
-                f"pushed {len(s3_paths)} raw images from remote in {int(time.time()-start)} seconds"
+                f"pulled {len(s3_paths)} raw images from remote in {int(time.time()-start)} seconds"
             )

@@ -20,16 +20,31 @@ def test_w2cv_produce_known_analysis_results():
         trial_id="known-dist",
         hostname="pytester",
         trial_timestamp="testoclock",
-        work_dir=Path(__file__).parent.joinpath("test-assets")
+        work_dir=Path(__file__).parent.joinpath("test-assets"),
     )
     w2cv = WordToColorVector(label="atlantis", trial=trial)
     w2cv.run_analysis()
 
-
-    expected_rgb_dist = [1.89736450e-07, 6.40508963e-08, 4.61866761e-09, 8.04098130e-08,
- 1.60031875e-08, 1.87863849e-09, 1.86990891e-08, 1.07072293e-07]
-    expected_jzazbz_dist = [243.92783389, 172.05688373,   3.19593217,  54.89909299, 151.00108506,
- 148.22235232,   3.8768293,   64.57348934]
+    expected_rgb_dist = [
+        1.89736450e-07,
+        6.40508963e-08,
+        4.61866761e-09,
+        8.04098130e-08,
+        1.60031875e-08,
+        1.87863849e-09,
+        1.86990891e-08,
+        1.07072293e-07,
+    ]
+    expected_jzazbz_dist = [
+        243.92783389,
+        172.05688373,
+        3.19593217,
+        54.89909299,
+        151.00108506,
+        148.22235232,
+        3.8768293,
+        64.57348934,
+    ]
     expected_rgb_ratio = [0.24078636, 0.35787702, 0.40133662]
 
     for i, v in enumerate(expected_rgb_dist):
