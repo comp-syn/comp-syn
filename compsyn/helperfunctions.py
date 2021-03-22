@@ -306,8 +306,8 @@ def search_and_download(
             search_term, number_images, wd=wd, sleep_between_interactions=sleep_time
         )
 
+    errors = defaultdict(list)
     for url in urls:
-        errors = defaultdict(list)
         try:
             save_image(target_path, url)
         except Exception as e:

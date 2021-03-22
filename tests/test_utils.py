@@ -56,7 +56,7 @@ def test_set_env_var() -> None:
     env_var_val_2 = "value-2"
     existing_env_var = os.getenv(env_var_key_a)
 
-    assert existing_env_var is None, "unset \"{env_var_key_a}\" before running tests"
+    assert existing_env_var is None, 'unset "{env_var_key_a}" before running tests'
 
     set_env_var(env_var_key_a, env_var_val_1)
 

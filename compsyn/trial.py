@@ -9,7 +9,10 @@ from pathlib import Path
 from .logger import get_logger
 from .utils import env_default
 
-def get_trial_args(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentParser:
+
+def get_trial_args(
+    parser: Optional[argparse.ArgumentParser] = None,
+) -> argparse.ArgumentParser:
 
     if parser is None:
         parser = argparse.ArgumentParser()
@@ -20,7 +23,7 @@ def get_trial_args(parser: Optional[argparse.ArgumentParser] = None) -> argparse
         type=str,
         action=env_default("COMPSYN_EXPERIMENT_NAME"),
         default="default-experiment",
-        help="An over-arching experiment_name can be used to facilitate multi-trial data collection efforts"
+        help="An over-arching experiment_name can be used to facilitate multi-trial data collection efforts",
     )
 
     trial_parser.add_argument(
@@ -28,35 +31,31 @@ def get_trial_args(parser: Optional[argparse.ArgumentParser] = None) -> argparse
         type=str,
         action=env_default("COMPSYN_TRIAL_ID"),
         default="default-trial",
-        help=""
+        help="",
     )
     trial_parser.add_argument(
         "--hostname",
         type=str,
         action=env_default("COMPSYN_HOSTNAME"),
         default="default-hostname",
-        help="Can be used to identify the hostname the data collection or analysis was run on"
+        help="Can be used to identify the hostname the data collection or analysis was run on",
     )
     trial_parser.add_argument(
         "--trial-timestamp",
         type=str,
         action=env_default("COMPSYN_TRIAL_TIMESTAMP"),
         default=datetime.utcnow().strftime("%Y-%m-%d"),
-        help="Usually this should be unset, as the code will record the current time."
+        help="Usually this should be unset, as the code will record the current time.",
     )
     trial_parser.add_argument(
         "--work-dir",
         type=str,
         action=env_default("COMPSYN_WORK_DIR"),
         required=False,
-        help="Root working directory for storing data locally"
-
+        help="Root working directory for storing data locally",
     )
 
     return parser
-
-
-
 
 
 class Trial:
@@ -122,7 +121,7 @@ def get_trial() -> Trial:
       2. a default Trial object can be provided for less structured uses of Compsyn
     """
     trial_args, unknown = get_trial_args().parse_known_args()
-    
+
     return Trial(
         experiment_name=trial_args.experiment_name,
         trial_id=trial_args.trial_id,
@@ -130,4 +129,3 @@ def get_trial() -> Trial:
         trial_timestamp=trial_args.trial_timestamp,
         work_dir=trial_args.work_dir,
     )
-

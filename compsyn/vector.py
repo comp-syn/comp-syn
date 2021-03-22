@@ -5,7 +5,12 @@ from pathlib import Path
 
 from .logger import get_logger
 from .trial import Trial, get_trial
-from .s3 import upload_file_to_s3, download_file_from_s3, s3_object_exists, NoObjectInS3Error
+from .s3 import (
+    upload_file_to_s3,
+    download_file_from_s3,
+    s3_object_exists,
+    NoObjectInS3Error,
+)
 from .utils import human_bytes
 
 
@@ -35,11 +40,10 @@ def load_vector_pickle(filename: Union[str, Path]) -> Any:
 class Vector:
     """
     A Vector may hold embeddings generated from any sensory input.
-    A Vector may hold links to data used to generate the Vector as well as analysis data in a Backend object.
-    The Vector class can be associated with a Trial object, which can be used to logically organize results.
-    An optional Backend will be included to facilitate collaboration.
+    A Vector may hold links to data used to generate the Vector as well as analysis data in a remote backend.
+    The Vector class is associated with a Trial object, which can be used to logically organize results.
 
-    The Vector object will implement some of the functionality, but also serves as an abstract base class for Vector subclass implementers.
+    The Vector class will implement some of the shared functionality for persistence, but implements no logic for gathering data or creating "vector" analysis data.
     """
 
     def __init__(
@@ -61,6 +65,9 @@ class Vector:
         #: track whether the information the vector represents is locally available as attributes
         self._attributes_available: bool = False
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.label}) for {self.trial}"
+
     @property
     def _local_pickle_path(self) -> Path:
         #: local path for saving and loading from a pickle
@@ -79,11 +86,6 @@ class Vector:
             .joinpath("w2cv.pickle")
         )
 
-    # @abstractmethod
-    def run_analysis(self, **kwargs) -> None:
-        # run analysis from folder of local data, populating attributes of the Vector object
-        pass
-
     def load(self) -> Vector:
         """
         Load and return a vector from a pickle file
@@ -97,7 +99,7 @@ class Vector:
                 f"{obj.__class__.__name__} loaded from pickle is not a {self.__class__}."
             )
 
-        # bad idea to replace self like this?
+        # is it a bad idea to replace self like this?
         self.__dict__.update(obj.__dict__)
 
     def save(self) -> None:
@@ -134,3 +136,7 @@ class Vector:
         upload_file_to_s3(
             local_path=self._local_pickle_path, s3_path=self.vector_pickle_path,
         )
+
+    # @abstractmethod
+    def run_analysis(**kwargs) -> None:
+        pass

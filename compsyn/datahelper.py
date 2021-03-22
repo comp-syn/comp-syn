@@ -105,7 +105,7 @@ class ImageData:
             fp = os.path.join(path, f)
             img = None
             try:
-                img = self.load_rgb_image(fp, compress_dims=self.compress_dims)
+                img = self.load_rgb_image(fp)
             except ValueError as exc:
                 self.log.error(f"{exc} failed to load image {fp}")
             if img is not None:

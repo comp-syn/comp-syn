@@ -34,9 +34,11 @@ class WordToColorVector(Vector):
 
     def __repr__(self) -> str:
         """ Nice looking representation """
-        output = f"{self.__class__.__name__}({self.label}) for {self.trial}"
+        output = super().__repr__()
         if len(list(self._local_raw_images_path.iterdir())) == 0:
-            output += " (no local raw data)"
+            output += "\n\t(no local raw data)"
+        else:
+            output += "\n\tlocal data: {self._local_raw_images_path}"
 
         try:
             output += f"\n\tjzazbz_dist = {json.dumps(self.jzazbz_dist.tolist())}"
@@ -107,7 +109,8 @@ class WordToColorVector(Vector):
         except FileNotFoundError:
             raw_images_available = 0
 
-        if raw_images_available >= 0.80 * self.number_of_images:
+        # allow a small failure rate, as a small percentage of downloads will fail
+        if raw_images_available >= 0.94 * self.number_of_images:
             self.log.info(
                 f"there are already {raw_images_available} raw images available, skipping image capture"
             )

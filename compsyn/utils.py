@@ -1,7 +1,6 @@
 """
-Provides a utility code:
-    - methods for helping with configuration
-    - common tasks like compressing an image
+- methods for helping with configuration from environment
+- common tasks like compressing an image, creating human-readable bytes
 """
 
 from __future__ import annotations
@@ -15,6 +14,7 @@ from PIL import Image
 
 from .logger import get_logger
 
+
 def set_env_var(key: str, val: Optional[str]) -> None:
     """ 
         Set the COMPSYN_ environment variable for key, warning when overwriting
@@ -27,9 +27,11 @@ def set_env_var(key: str, val: Optional[str]) -> None:
         key = "COMPSYN_" + key
 
     existing_env_val = os.getenv(key)
-    
+
     if existing_env_val is not None and existing_env_val != val:
-        log.warning(f"existing environment value ({existing_env_val}) for {key} will be overwritten with {val}")
+        log.warning(
+            f"existing environment value ({existing_env_val}) for {key} will be overwritten with {val}"
+        )
 
     if val is None:
         try:
@@ -62,6 +64,7 @@ class EnvDefault(argparse.Action):
 
 def env_default(envvar):
     """ functional sugar for EnvDefault """
+
     def wrapper(**kwargs):
         return EnvDefault(envvar, **kwargs)
 
