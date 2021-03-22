@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import datetime
 import hashlib
 import io
@@ -11,12 +12,45 @@ import os
 import random
 import requests
 import time
+from collections import defaultdict
 
-from PIL import Image
+from pathlib import Path
+
+from PIL import Image, UnidentifiedImageError
 from google.cloud import vision_v1p2beta1 as vision
+import selenium
 from selenium import webdriver
 
 from .logger import get_logger
+from .utils import env_default
+
+
+def get_browser_args(
+    parser: Optional[argparse.ArgumentParser] = None,
+) -> argparse.ArgumentParser:
+
+    if parser is None:
+        parser = argparse.ArgumentParser()
+
+    browser_parser = parser.add_argument_group("browser")
+
+    browser_parser.add_argument(
+        "--driver-browser",
+        type=str,
+        action=env_default("COMPSYN_DRIVER_BROWSER"),
+        default="Firefox",
+        help="Browser name, e.g. Firefox, Chrome",
+    )
+
+    browser_parser.add_argument(
+        "--driver-path",
+        type=str,
+        action=env_default("COMPSYN_DRIVER_PATH"),
+        default="/usr/local/bin/geckodriver",
+        help="Browser driver path",
+    )
+
+    return parser
 
 
 def get_webdriver(
@@ -89,7 +123,8 @@ def fetch_image_urls(
     wd: webdriver,
     thumb_css: str = "img.Q4LuWd",
     img_css: str = "img.n3VNCb",
-    load_page_css: str = ".mye4qd",
+    load_more_css: str = ".mye4qd",
+    see_more_anyway_css: str = ".r0zKGf",
     sleep_between_interactions: float = 0.4,
 ) -> List[str]:
 
@@ -119,6 +154,7 @@ def fetch_image_urls(
     image_urls = set()
     image_count = 0
     results_start = 0
+    number_results = 0
 
     while image_count < number_of_links_to_fetch:
 
@@ -128,7 +164,7 @@ def fetch_image_urls(
         )  # get all image thumbnail results
         if len(thumbnail_results) == 0:
             log.warning(f"found no thumbnails using the selector {thumb_css}")
-        number_results = len(thumbnail_results)
+        number_results += len(thumbnail_results)
 
         log.info(
             f"Found: {number_results} search results. Extracting links from {results_start}:{number_results}"
@@ -150,26 +186,55 @@ def fetch_image_urls(
                 if actual_image.get_attribute(
                     "src"
                 ) and "http" in actual_image.get_attribute("src"):
-                    image_urls.add(actual_image.get_attribute("src"))
-                    image_count += 1
+                    image_url = actual_image.get_attribute("src")
+                    if image_url not in image_urls:
+                        # only count if we could actually download an image
+                        image_count += 1
+                    image_urls.add(image_url)
                     if image_count >= number_of_links_to_fetch:
-                        log.info(f"Found: {image_count} image links, done!")
+                        log.info(
+                            f"Found: {len(image_urls)}/{image_count} image links, done!"
+                        )
                         return image_urls
 
+        log.info(f"Found: {image_count} usable image links, looking for more ...")
+        scroll_to_end(wd)
+
+        # look for the More Results or Load More Anyway button, preferring the latter as it is conditional
+        try:
+            see_more_anyway_button = wd.find_element_by_css_selector(
+                see_more_anyway_css
+            )
+        except selenium.common.exceptions.NoSuchElementException:
+            see_more_anyway_button = None
+
+        try:
+            load_more_button = wd.find_element_by_css_selector(load_more_css)
+        except selenium.common.exceptions.NoSuchElementException:
+            load_more_button = None
+
+        if see_more_anyway_button is not None:
+            # prefer this one
+            wd.execute_script(
+                f"document.querySelector('{see_more_anyway_css}').click();"
+            )
+            log.debug(f"clicked See More Anyway ({see_more_anyway_css})")
+        elif load_more_button is not None:
+            wd.execute_script(f"document.querySelector('{load_more_css}').click();")
+            log.debug(f"clicked Load More ({load_more_css})")
         else:
-            log.info(f"Found: {image_count} image links, looking for more ...")
-            load_more_button = wd.find_element_by_css_selector(load_page_css)
-            if load_more_button:
-                fuzzy_sleep(sleep_between_interactions)
-                wd.execute_script(f"document.querySelector('{load_page_css}').click();")
-            else:
-                log.warning(
-                    f"{image_count}/{number_of_links_to_fetch} images gathered, but no 'load_more_button' found with the selector '{load_page_css}', returning what we have so far"
-                )
-                return image_urls
+            log.warning(
+                f"{image_count}/{number_of_links_to_fetch} images gathered, but no 'load_more_button' or 'see_more_anyway' buttons found with the selectors '{load_more_css}'/'{see_more_anyway_css}', returning what we have so far"
+            )
+            return image_urls
+        fuzzy_sleep(sleep_between_interactions)
 
         # move the result startpoint further down
         results_start = len(thumbnail_results)
+
+
+class UnexpectedHTMLResponseFromImgSrcError(Exception):
+    pass
 
 
 def save_image(folder_path: str, url: str) -> None:
@@ -182,31 +247,30 @@ def save_image(folder_path: str, url: str) -> None:
 
     log = get_logger("save_image")
 
-    try:
-        image_content = requests.get(url).content
-    except Exception as e:
-        log.error(f"Could not download {url}: {e}")
+    resp = requests.get(url)
+    image_content = resp.content
 
+    image_file = io.BytesIO(image_content)
     try:
-        image_file = io.BytesIO(image_content)
         image = Image.open(image_file).convert("RGB")
-        file_path = os.path.join(
-            folder_path, hashlib.sha1(image_content).hexdigest()[:10] + ".jpg"
-        )
+    except UnidentifiedImageError as exc:
+        if "text/html" in resp.headers["content-type"]:
+            raise UnexpectedHTMLResponseFromImgSrcError() from exc
+        else:
+            raise
 
-        with open(file_path, "wb") as f:
-            image.save(f, "JPEG", quality=85)
+    file_path = os.path.join(
+        folder_path, hashlib.sha1(image_content).hexdigest()[:10] + ".jpg"
+    )
 
-    except Exception as e:
-        log.error(f"Could not save image to disk: {e}")
-        pass
+    with open(file_path, "wb") as f:
+        image.save(f, "JPEG", quality=85)
 
 
 def search_and_download(
     search_term: str,
     driver_browser: str,
     driver_executable_path: str,
-    home: str,
     driver_options: Optional[List[str]] = None,
     target_path: str = "./downloads",
     number_images: int = 5,
@@ -224,11 +288,14 @@ def search_and_download(
        number_images: number of images to download for each query
        sleep_time: general rate of sleep activity (lower values raise red flags for Google)
     """
+    log = get_logger("search_and_download")
 
-    target_folder = os.path.join(target_path, search_term)
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
 
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
+    log.debug(
+        f"starting {driver_browser} webdriver at {driver_executable_path} with {driver_options}"
+    )
 
     with get_webdriver(
         driver_browser=driver_browser,
@@ -239,11 +306,23 @@ def search_and_download(
             search_term, number_images, wd=wd, sleep_between_interactions=sleep_time
         )
 
+    errors = defaultdict(list)
     for url in urls:
-        save_image(target_folder, url)
+        try:
+            save_image(target_path, url)
+        except Exception as e:
+            errors[e].append(url)
+
+    if len(errors) > 0:
+        log.warning(
+            f"{len(errors)} images could not be downloaded from the scraped URLs: {errors}"
+        )
+
+    log.info(
+        f"{len(urls) - len(errors)}/{number_images} images successfully downloaded"
+    )
 
     wd.quit()
-    os.chdir(home)
 
     return urls
 

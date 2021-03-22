@@ -41,3 +41,18 @@ Notes
 
 To use the package one would need to download the JzAzBz array to convert the images to the appropriate vector form. It can be downloaded here (`link <https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view>`_). We provide sample images downloaded from Google Images to test the functionality.
 
+
+Compsyn V1.0.0
+~~~~~~~~~~~~~~
+
+- New image analysis techniques (wavelet with PCA)
+- Introduces the Trial dataclass for creating logically separated datasets
+- Optional shared backend via S3, trials can be saved with specific "revision" names, data easily shared
+- Re-worked notebooks as documentation of the API to Vectors
+
+
+Shared Backend with S3
+~~~~~~~~~~~~~~~~~~~~~~
+
+- raw data and Vector objects can be saved remotely for collaboration
+- saving vectors or data to the backend is done by creating a "revision"

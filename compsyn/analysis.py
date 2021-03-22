@@ -11,6 +11,7 @@ import matplotlib.colors as mplcolors
 from numba import jit
 
 from .logger import get_logger
+from .datahelper import ImageData
 
 
 def kl_divergence(dist1, dist2, symmetrized=True):
@@ -54,8 +55,8 @@ def js_divergence(dist1, dist2):
 
 
 class ImageAnalysis:
-    def __init__(self, image_data):
-        # assert isinstance(image_data, compsyn.ImageData)
+    def __init__(self, image_data: ImageData):
+        assert isinstance(image_data, ImageData)
         self.image_data = image_data
         self.jzazbz_dict = image_data.jzazbz_dict
         self.rgb_dict = image_data.rgb_dict
@@ -95,10 +96,13 @@ class ImageAnalysis:
         Returns:
             self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
         """
-        dims = self.image_data.dims
+        assert (
+            self.image_data.compress_dims is not None
+        ), "Must set compress_dims on ImageData to carry out analysis"
         if labels == "default":
             labels = self.labels_list
         labels = labels if isinstance(labels, list) else [labels]
+        self.log.debug(f"compute_color_distributions for {labels}")
         self.jzazbz_dist_dict, self.hsv_dist_dict = {}, {}
         self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
         color_rep = [i.lower() for i in color_rep]
@@ -118,7 +122,12 @@ class ImageAnalysis:
                     dist = np.ravel(
                         np.histogramdd(
                             np.reshape(
-                                imageset[i][:, :, :], (dims[0] * dims[1], num_channels)
+                                imageset[i][:, :, :],
+                                (
+                                    self.image_data.compress_dims[0]
+                                    * self.image_data.compress_dims[1],
+                                    num_channels,
+                                ),
                             ),
                             bins=(
                                 np.linspace(
@@ -186,7 +195,14 @@ class ImageAnalysis:
                     rgb.append([r / tot, g / tot, b / tot])
                     dist = np.ravel(
                         np.histogramdd(
-                            np.reshape(imageset[i], (dims[0] * dims[1], num_channels)),
+                            np.reshape(
+                                imageset[i],
+                                (
+                                    self.image_data.compress_dims[0]
+                                    * self.image_data.compress_dims[1],
+                                    num_channels,
+                                ),
+                            ),
                             bins=(
                                 np.linspace(
                                     0,
