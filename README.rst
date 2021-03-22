@@ -48,25 +48,21 @@ Contributing
 Contributions to compsyn should use docstrings to document each package/class/method being contributed. Tests should also be implemented for as much of the code as possible.
 
 
-Tests with `pytest` - 
+Tests with ``pytest`` - 
 
-To run pytest, first install it (`pip install pytest pytest-cov pytest-depends`). By default, pytest will run every method found in the `tests` directory that has the name prefix `test_`. Tests should also be marked with one of the following `@pytest.mark.<label>` values: 
+To run pytest, first install it (``pip install pytest pytest-cov pytest-depends``). By default, pytest will run every method found in the ``tests`` directory that has the name prefix ``test_``. Tests should also be marked with one of the following ``@pytest.mark.<label>`` values: 
 
-  `unit` - for testing the smallest units of functionality. These tests should be fast, and involve as few dependencies as possible to test each specific method being implemented.
-  `integration` - for testing more abstracted interfaces into compsyn, these tests target code that involve multiple compsyn code paths being executed as part of some higher order logic. These tests should still be fast, and should not involve external networking.
-  `online` - for testing parts of compsyn that involve network requests. These tests can be arbitrarily complex, and may be slow to run.
+  ``unit`` - for testing the smallest units of functionality. These tests should be fast, and involve as few dependencies as possible to test each specific method being implemented.
+  ``integration`` - for testing more abstracted interfaces into compsyn, these tests target code that involve multiple compsyn code paths being executed as part of some higher order logic. These tests should still be fast, and should not involve external networking.
+  ``online`` - for testing parts of compsyn that involve network requests. These tests can be arbitrarily complex, and may be slow to run.
 
-by default, all test types will be run by `pytest`
+by default, all test types will be run by ``pytest``
 
-```
-pytest --cov=compsyn
-```
+``pytest --cov=compsyn``
 
 Specific test can be targetted by path and mark,
 
-```
-pytest -m unit ./tests/test_utils.py
-```
+``pytest -m unit ./tests/test_utils.py``
 
 Compsyn V1.0.0
 ~~~~~~~~~~~~~~
