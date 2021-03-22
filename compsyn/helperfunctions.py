@@ -14,6 +14,9 @@ import requests
 import time
 from collections import defaultdict
 
+import warnings
+warnings.filterwarnings("error")
+
 from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError

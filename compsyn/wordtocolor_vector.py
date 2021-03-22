@@ -35,7 +35,7 @@ class WordToColorVector(Vector):
     def __repr__(self) -> str:
         """ Nice looking representation """
         output = super().__repr__()
-        if len(list(self._local_raw_images_path.iterdir())) == 0:
+        if not self._local_raw_images_path.is_dir() or len(list(self._local_raw_images_path.iterdir())) == 0:
             output += "\n\t(no local raw data)"
         else:
             output += "\n\tlocal data: {self._local_raw_images_path}"

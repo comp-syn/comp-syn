@@ -66,7 +66,7 @@ class Vector:
         self._attributes_available: bool = False
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.label}) for {self.trial}"
+        return f"{self.__class__.__name__}({self.label})" + "\n\t" + "\n\t\t└──".join(str(self.trial).split("\n\t"))
 
     @property
     def _local_pickle_path(self) -> Path:
