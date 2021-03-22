@@ -35,11 +35,13 @@ def test_upload_file_to_s3() -> None:
 
 
 @pytest.mark.online
+@pytest.mark.depends(on=["test_upload_file_to_s3"])
 def test_s3_object_exists() -> None:
     assert s3_object_exists(S3_PATH)
 
 
 @pytest.mark.online
+@pytest.mark.depends(on=["test_upload_file_to_s3"])
 def test_s3_list_object_paths_in_s3() -> None:
     count = 0
     for s3_path in list_object_paths_in_s3(S3_PATH.parent):
@@ -48,10 +50,13 @@ def test_s3_list_object_paths_in_s3() -> None:
 
 
 @pytest.mark.online
+@pytest.mark.depends(on=["test_upload_file_to_s3"])
 def test_download_file_from_s3() -> None:
-    LOCAL_PATH.unlink()
-    assert not LOCAL_PATH.is_file()
-    download_file_from_s3(local_path=LOCAL_PATH, s3_path=S3_PATH)
-    assert LOCAL_PATH.is_file()
-    download_file_from_s3(local_path=LOCAL_PATH, s3_path=S3_PATH)
-    download_file_from_s3(local_path=LOCAL_PATH, s3_path=S3_PATH, overwrite=True)
+    tmp_local_path = LOCAL_PATH.with_suffix(".pytest.tmp")
+    assert not tmp_local_path.is_file()
+    download_file_from_s3(local_path=tmp_local_path, s3_path=S3_PATH)
+    assert tmp_local_path.is_file()
+    download_file_from_s3(local_path=tmp_local_path, s3_path=S3_PATH)
+    download_file_from_s3(local_path=tmp_local_path, s3_path=S3_PATH, overwrite=True)
+    tmp_local_path.unlink()
+    assert not tmp_local_path.is_file()
