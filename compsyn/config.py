@@ -5,11 +5,11 @@ import argparse
 import os
 
 from .logger import get_logger
-from .helperfunctions import get_browser_args
+from .helperfunctions import get_browser_args, get_google_application_args
 from .s3 import get_s3_args
 from .jzazbz import get_jzazbz_args
 from .trial import get_trial_args
-from .utils import set_env_var
+from .utils import set_env_var, get_logger_args
 
 
 class CompsynConfig:
@@ -43,7 +43,7 @@ class CompsynConfig:
                 and val is not None
             ):
                 val = "<redacted>"
-            representation += f"\n\t{key:20s} = {val}"
+            representation += f"\n\t{key:30s} = {val}"
         return representation
 
     @property
@@ -53,9 +53,10 @@ class CompsynConfig:
     @property
     def args(self) -> List[str]:
         parser = argparse.ArgumentParser()
-        get_trial_args(parser)
         get_jzazbz_args(parser)
+        get_google_application_args(parser)
         get_browser_args(parser)
         get_s3_args(parser)
+        get_logger_args(parser)
         args, unknown = parser.parse_known_args()
         return vars(args)

@@ -13,11 +13,12 @@ import random
 import requests
 import time
 from collections import defaultdict
+from pathlib import Path
 
 import warnings
+
 warnings.filterwarnings("error")
 
-from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 from google.cloud import vision_v1p2beta1 as vision
@@ -51,6 +52,26 @@ def get_browser_args(
         action=env_default("COMPSYN_DRIVER_PATH"),
         default="/usr/local/bin/geckodriver",
         help="Browser driver path",
+    )
+
+    return parser
+
+
+def get_google_application_args(
+    parser: Optional[argparse.ArgumentParser] = None,
+) -> argparse.ArgumentParser:
+
+    if parser is None:
+        parser = argparse.ArgumentParser()
+
+    google_vision_parser = parser.add_argument_group("google_vision")
+
+    google_vision_parser.add_argument(
+        "--google-application-credentials",
+        type=str,
+        action=env_default("COMPSYN_GOOGLE_APPLICATION_CREDENTIALS"),
+        required=False,
+        help="Credentials file for accessing GCloud services like Google Vision API, etc.",
     )
 
     return parser
@@ -90,27 +111,6 @@ def get_webdriver(
         return WebDriver(options=options)
     else:
         return WebDriver(executable_path=driver_executable_path, options=options)
-
-
-def settings(
-    application_cred_name: str,
-    driver_browser: str,
-    driver_executable_path: str,
-    driver_options: Optional[List[str]] = None,
-) -> None:
-    # This client for the Google API needs to be set for the VISION classification
-    # but it is not necessary for the selenium scaper for image downloading
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = application_cred_name
-    client = vision.ImageAnnotatorClient()  # authentification via environment variable
-
-    # See here for scraper details:
-    # https://towardsdatascience.com/image-scraping-with-python-a96feda8af2d
-    wd = get_webdriver(
-        driver_browser=driver_browser,
-        driver_executable_path=driver_executable_path,
-        driver_options=driver_options,
-    )
-    wd.quit()
 
 
 def fuzzy_sleep(min_time: int) -> None:
@@ -170,7 +170,7 @@ def fetch_image_urls(
         number_results += len(thumbnail_results)
 
         log.info(
-            f"Found: {number_results} search results. Extracting links from {results_start}:{number_results}"
+            f"'{query}': {number_results} search results. Extracting links from {results_start}:{number_results}"
         )
 
         for img in thumbnail_results[results_start:number_results]:
@@ -195,8 +195,8 @@ def fetch_image_urls(
                         image_count += 1
                     image_urls.add(image_url)
                     if image_count >= number_of_links_to_fetch:
-                        log.info(
-                            f"Found: {len(image_urls)}/{image_count} image links, done!"
+                        log.debug(
+                            f"Found: {len(image_urls)}/{image_count} image links, done fetching URLs!"
                         )
                         return image_urls
 
@@ -317,12 +317,14 @@ def search_and_download(
             errors[e].append(url)
 
     if len(errors) > 0:
-        log.warning(
+        # There are often failures in url fetching, in many cases these are caused by the host having
+        # some bot-screening layer in place. Perhaps we should log (and skip) these hostnames in the future.
+        log.debug(
             f"{len(errors)} images could not be downloaded from the scraped URLs: {errors}"
         )
 
     log.info(
-        f"{len(urls) - len(errors)}/{number_images} images successfully downloaded"
+        f"{len(urls) - len(errors)}/{number_images} images successfully downloaded for '{search_term}'"
     )
 
     wd.quit()
@@ -340,6 +342,11 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
     """
 
     get_logger("run_google_vision").info("Classifying Imgs. w. Google Vision API...")
+
+    # copy environment variable from configuration to the name where google API expects to find it
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
+        "COMPSYN_GOOGLE_APPLICATION_CREDENTIALS"
+    )
 
     client = vision.ImageAnnotatorClient()
     image = vision.types.Image()
@@ -368,52 +375,45 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
 
 
 def write_to_json(to_save: Dict[str, Any], filename: str) -> None:
-    """ add and write dictionary to existing json file"""
-    with open(filename, "a") as to_write_to:
+    """ write dictionary to existing json file"""
+    with open(filename, "w") as to_write_to:
         json.dump(to_save, to_write_to, indent=4)
 
 
 def write_img_classifications_to_file(
-    home: str, search_terms: List[str], img_classified_dict: Dict[str, Any]
+    search_terms: List[str], img_classified_dict: Dict[str, Any]
 ) -> None:
     """
        Store Google vision's classifications for images in a json file, which can then be retrieved for 
        the purposes of filtering and also statistical analyses.  
        
-       home: home directory of notebook
        search_terms: terms used for querying Google
        img_classified_dict: dictionary of image URLs and classifications from Google Vision
     """
 
     log = get_logger("write_img_classifications_to_file")
 
-    os.chdir(home + "/image_classifications")
+    base_dir = CompsynConfig().workdir.joinpath("image_classifications")
 
     for term in search_terms:
         term_data = img_classified_dict[term]
 
         if term_data:
-            filename = (
+            filename = base_dir.joinpath(
                 "classifications_"
                 + term
                 + "_"
                 + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
                 + ".json"
             )
-            file_exist = os.path.isfile(filename)
 
-            if file_exist:
+            if filename.is_file():
                 log.info("File already exists! Appending to file.. ")
 
-                with open(filename, encoding="utf-8") as f:
-                    term_data_orig = json.load(f)
-
+                term_data_orig = json.loads(filename.read_text())
                 term_data_orig.update(term_data)
-                os.remove(filename)
-                write_to_json(term_data_orig, filename)
+                filename.write_text(json.dumps(term_data_orig))
 
             else:
                 log.info("File new! Saving..")
-                write_to_json(term_data, filename)
-
-    os.chdir(home)
+                filename.write_text(json.dumps(term_data, indent=2))

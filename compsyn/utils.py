@@ -8,11 +8,41 @@ from __future__ import annotations
 import argparse
 import os
 import tempfile
+import logging
 from pathlib import Path
 
 from PIL import Image
 
 from .logger import get_logger
+
+
+def get_logger_args(
+    parser: Optional[argparse.ArgumentParser] = None,
+) -> argparse.ArgumentParser:
+    """ Fetches arguments for compsyn's logging """
+
+    if parser is None:
+        parser = argparse.ArgumentParser()
+
+    logger_parser = parser.add_argument_group("logger")
+
+    logger_parser.add_argument(
+        "--log-level",
+        type=str,
+        action=env_default("COMPSYN_LOG_LEVEL"),
+        default=str(logging.INFO),
+        help="default log level for the console handler",
+    )
+
+    logger_parser.add_argument(
+        "--log-file",
+        type=str,
+        action=env_default("COMPSYN_LOG_FILE"),
+        required=False,
+        help="file to use for debug level log file",
+    )
+
+    return parser
 
 
 def set_env_var(key: str, val: Optional[str]) -> None:
@@ -29,8 +59,8 @@ def set_env_var(key: str, val: Optional[str]) -> None:
     existing_env_val = os.getenv(key)
 
     if existing_env_val is not None and existing_env_val != val:
-        log.warning(
-            f"existing environment value ({existing_env_val}) for {key} will be overwritten with {val}"
+        log.debug(
+            f"existing environment {key}={existing_env_val} clobbered by {key}={val}"
         )
 
     if val is None:

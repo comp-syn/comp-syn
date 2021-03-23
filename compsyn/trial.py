@@ -99,6 +99,7 @@ class Trial:
                     f"no work_dir passed, using a temporary directory: {work_dir}"
                 )
         self.work_dir = Path(work_dir)
+        self.work_dir.mkdir(exist_ok=True, parents=True)
 
         self.log = get_logger(self.__class__.__name__)
         self.log.info(f"work_dir: {self.work_dir}")
@@ -111,6 +112,7 @@ class Trial:
         representation += f"\n\texperiment_name = {self.experiment_name}"
         representation += f"\n\ttrial_id        = {self.trial_id}"
         representation += f"\n\thostname        = {self.hostname}"
+        representation += f"\n\ttrial_timestamp = {self.trial_timestamp}"
         return representation
 
 

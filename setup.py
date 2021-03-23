@@ -13,12 +13,15 @@ with open("README.rst") as f:
 
 PYPROJECT = toml.loads(Path(__file__).parent.joinpath("pyproject.toml").read_text())
 
+
 def install_requires() -> List[str]:
     """ Populate install_requires from requirements.txt """
-    requirements_txt_proc = subprocess.run(["poetry", "export", "-f", "requirements.txt"], capture_output=True, check=True)
+    requirements_txt_proc = subprocess.run(
+        ["poetry", "export", "-f", "requirements.txt"], capture_output=True, check=True
+    )
     requirements_text = requirements_txt_proc.stdout.decode("utf-8")
 
-    return [ requirement for requirement in requirements_txt.split("\n") ]
+    return [requirement for requirement in requirements_txt.split("\n")]
 
 
 setup(

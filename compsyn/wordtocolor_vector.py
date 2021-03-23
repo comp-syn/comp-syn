@@ -28,27 +28,39 @@ class WordToColorVector(Vector):
         super().__init__(**kwargs)
         self.image_analysis: Union[None, ImageAnalysis] = None
         self.number_of_images = number_of_images
-        self.log = get_logger(self.__class__.__name__)
+        self.log = get_logger(self.__class__.__name__ + f".{self.label}")
         self._local_raw_images_path = self.trial.work_dir.joinpath(self.raw_images_path)
+        self.raw_image_urls = None
         self.log.debug(f"local downloads: {self._local_raw_images_path}")
 
     def __repr__(self) -> str:
         """ Nice looking representation """
         output = super().__repr__()
-        if not self._local_raw_images_path.is_dir() or len(list(self._local_raw_images_path.iterdir())) == 0:
-            output += "\n\t(no local raw data)"
+        output += "\n\tgenerated data:"
+        if not self._local_raw_images_available:
+            output += "\n\t\t(no local raw data)"
         else:
-            output += "\n\tlocal data: {self._local_raw_images_path}"
+            output += f"\n\t\t(raw images available)"
+
+        if self.raw_image_urls is not None:
+            output += f"\n\t\t{'raw_image_urls':16s} = {len(self.raw_image_urls)}"
 
         try:
-            output += f"\n\tjzazbz_dist = {json.dumps(self.jzazbz_dist.tolist())}"
-            output += (
-                f"\n\tjzazbz_dist_std = {json.dumps(self.jzazbz_dist_std.tolist())}"
-            )
+            rounded_rgb_values = [f"{val:.2e}" for val in self.rgb_dist.tolist()]
+            output += f"\n\t\t{'rgb_dist':16s} = {rounded_rgb_values}"
+            output += f"\n\t\t{'jzazbz_dist':16s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
+            output += f"\n\t\t{'jzazbz_dist_std':16s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
         except AttributeError:
             pass
 
         return output
+
+    @property
+    def _local_raw_images_available(self) -> bool:
+        return not (
+            not self._local_raw_images_path.is_dir()
+            or len(list(self._local_raw_images_path.iterdir())) == 0
+        )
 
     @property
     def raw_images_path(self) -> Path:
@@ -58,6 +70,38 @@ class WordToColorVector(Vector):
             .joinpath(self.trial.trial_id)
             .joinpath(self.trial.hostname)
             .joinpath(self.trial.trial_timestamp)
+        )
+
+    def run_image_capture(self, driver_options: Optional[List[str]] = None,) -> None:
+        """ Gather images from Google Images sets the attribute `self.raw_image_urls`"""
+
+        # check if there are already raw images available already
+        try:
+            raw_images_available = len(list(self._local_raw_images_path.iterdir()))
+        except FileNotFoundError:
+            raw_images_available = 0
+
+        # allow a small failure rate, as a small percentage of downloads will fail
+        if raw_images_available >= 0.90 * self.number_of_images:
+            self.log.info(f"{raw_images_available} raw images already downloaded")
+            if self.raw_image_urls is None:
+                self.log.debug(
+                    f"raw images are present on disk, but no URLs are known. Perhaps there is a saved object to load urls from"
+                )
+            return
+
+        if driver_options is None:
+            driver_options = ["--headless"]
+
+        browser_args, unknown = get_browser_args().parse_known_args()
+
+        self.raw_image_urls = search_and_download(
+            search_term=self.label,
+            driver_browser=browser_args.driver_browser,
+            driver_executable_path=browser_args.driver_path,
+            driver_options=driver_options,
+            target_path=self._local_raw_images_path,
+            number_images=100,
         )
 
     def run_analysis(self, **kwargs) -> None:
@@ -87,6 +131,18 @@ class WordToColorVector(Vector):
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
 
+    def run(self, **kwargs) -> None:
+
+        fresh_start = not self._local_raw_images_available
+
+        self.run_image_capture()
+        if self.raw_image_urls is None:
+            self.load()
+        elif fresh_start:
+            self.save()
+
+        self.run_analysis()
+
     def print_word_color(self, size: int = 30, color_magnitude: float = 1.65) -> None:
 
         fig = plt.figure()
@@ -97,40 +153,6 @@ class WordToColorVector(Vector):
         )
         ax.set_axis_off()
         plt.show()
-
-    def run_image_capture(
-        self, driver_options: Optional[List[str]] = None,
-    ) -> List[str]:
-        """ Gather images from Google Images """
-
-        # check if there are already raw images available already
-        try:
-            raw_images_available = len(list(self._local_raw_images_path.iterdir()))
-        except FileNotFoundError:
-            raw_images_available = 0
-
-        # allow a small failure rate, as a small percentage of downloads will fail
-        if raw_images_available >= 0.94 * self.number_of_images:
-            self.log.info(
-                f"there are already {raw_images_available} raw images available, skipping image capture"
-            )
-            return
-
-        if driver_options is None:
-            driver_options = ["--headless"]
-
-        browser_args, unknown = get_browser_args().parse_known_args()
-
-        urls = search_and_download(
-            search_term=self.label,
-            driver_browser=browser_args.driver_browser,
-            driver_executable_path=browser_args.driver_path,
-            driver_options=driver_options,
-            target_path=self._local_raw_images_path,
-            number_images=100,
-        )
-
-        return urls
 
     def save(self) -> None:
         # clear some of the bulkier analysis data, raw data is still available

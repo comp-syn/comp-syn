@@ -47,7 +47,11 @@ class Vector:
     """
 
     def __init__(
-        self, label: str, revision: Optional[str] = None, trial: Optional[Trial] = None
+        self,
+        label: str,
+        revision: Optional[str] = None,
+        trial: Optional[Trial] = None,
+        metadata: Optional[Dict[str, str]] = None,
     ) -> None:
         #: label for the vector
         self.label = label
@@ -56,17 +60,28 @@ class Vector:
             self.revision = "unnamed"
         else:
             self.revision = revision
-        #: metadata to associate with results can be configured through a Trial dataclass
+        #: experiment metadata to associate with results can be configured through a Trial dataclass
         if trial is None:
             # default to getting trial metadata from the environment
             self.trial = get_trial()
         else:
             self.trial = trial
+
+        #: other metadata can also be tracked by directly passing it
+        self.metadata = metadata
         #: track whether the information the vector represents is locally available as attributes
         self._attributes_available: bool = False
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.label})" + "\n\t" + "\n\t\t└──".join(str(self.trial).split("\n\t"))
+        output = f"{self.__class__.__name__}({self.label})\n\t"
+        output += "\n\t\t".join(str(self.trial).split("\n\t"))
+        if self.metadata is not None:
+            output += "\n\tmetadata:\n\t\t"
+            output += "\n\t\t".join(
+                [f"{key:40s} = {val}" for key, val in self.metadata.items()]
+            )
+
+        return output
 
     @property
     def _local_pickle_path(self) -> Path:
