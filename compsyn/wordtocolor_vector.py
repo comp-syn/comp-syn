@@ -72,6 +72,10 @@ class WordToColorVector(Vector):
             .joinpath(self.trial.trial_timestamp)
         )
 
+    def delete_local_images(self) -> None:
+        for img_path in self._local_raw_images_path.iterdir():
+            img_path.unlink()
+
     def run_image_capture(self, driver_options: Optional[List[str]] = None,) -> None:
         """ Gather images from Google Images sets the attribute `self.raw_image_urls`"""
 

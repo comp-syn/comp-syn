@@ -23,18 +23,33 @@ We currently provide functionality to download and organise image data to be loa
 Installation
 ~~~~~~~~~~~~
 
+In a virtual environment:
+
 Run ``pip install compsyn`` to download and install from PyPI.
+
+Run ``pip install -r requirements.txt`` to install from the last-pinned dependencies.
 
 Run ``python setup.py install`` for default installation.
 
 Run ``pip install .`` to install from source.
 
+With `poetry <https://python-poetry.org/>_`:
 
-Dependencies
+Run ``poetry install``
+
+
+Requirements
 ~~~~~~~~~~~~
 
--  Python 2.7+, 3.4+
--  numpy, scipy, scikit-learn, matplotlib, PIL
+-  Python 3.4+
+-  ``jzazbz_array.npy`` available here: `link <https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view>`_ 
+-  A webdriver, like `geckodriver <https://github.com/mozilla/geckodriver/releases>`_ or `chromedriver <https://chromedriver.chromium.org/>`_.
+
+
+Configuration
+~~~~~~~~~~~~~
+
+``compsyn`` requires some configuration be set, more details are available in the configuration notebook.
 
 Notes
 ~~~~~

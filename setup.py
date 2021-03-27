@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # Licensed under the MIT License - https://opensource.org/licenses/MIT
 
+from __future__ import annotations
+
 import toml
 from pathlib import Path
 from setuptools import setup
@@ -16,10 +18,7 @@ PYPROJECT = toml.loads(Path(__file__).parent.joinpath("pyproject.toml").read_tex
 
 def install_requires() -> List[str]:
     """ Populate install_requires from requirements.txt """
-    requirements_txt_proc = subprocess.run(
-        ["poetry", "export", "-f", "requirements.txt"], capture_output=True, check=True
-    )
-    requirements_text = requirements_txt_proc.stdout.decode("utf-8")
+    requirements_txt = Path(__file__).parent.joinpath("requirements.txt").read_text()
 
     return [requirement for requirement in requirements_txt.split("\n")]
 

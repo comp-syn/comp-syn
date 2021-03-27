@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
-
 import os
+from pathlib import Path
 
 from .logger import get_logger
 from .helperfunctions import get_browser_args, get_google_application_args
@@ -34,7 +34,14 @@ class CompsynConfig:
             set_env_var(key, val)  # set vars in os environ
             self.config[key] = val  # record on config object for convenience
 
+        for required_path in ["jzazbz_array"]:
+            if not Path(self.config["jzazbz_array"]).is_file():
+                raise FileNotFoundError(
+                    f"{self.config['jzazbz_array']} does not exist!"
+                )
+
     def __repr__(self) -> str:
+        """ A nice human readable representation """
         representation = f"{self.__class__.__name__}"
         for key, val in self.config.items():
             if (
@@ -48,10 +55,12 @@ class CompsynConfig:
 
     @property
     def secret_attrs(self) -> List[str]:
+        """ These will be hidden from output """
         return ["s3_secret_access_key"]
 
     @property
     def args(self) -> List[str]:
+        """ Accumulate argparsers here """
         parser = argparse.ArgumentParser()
         get_jzazbz_args(parser)
         get_google_application_args(parser)

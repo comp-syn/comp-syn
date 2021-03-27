@@ -11,8 +11,6 @@ from numba import jit
 
 from .logger import get_logger
 
-from .jzazbz import JZAZBZ_ARRAY_NPY
-
 
 class ImageLoadingError(Exception):
     pass
@@ -32,6 +30,13 @@ def rgb_array_to_jzazbz_array(rgb_array: np.ndarray) -> np.ndarray:
     r = rgb_array[:, :, 0].reshape([-1])
     g = rgb_array[:, :, 1].reshape([-1])
     b = rgb_array[:, :, 2].reshape([-1])
+    try:
+        from .jzazbz import JZAZBZ_ARRAY_NPY
+    except ImportError as exc:
+        raise ImportError(
+            f"This usually means that no jzazbz_array.npy file could be found at {os.getenv('COMPSYN_JZAZBZ_ARRAY')}"
+        ) from exc
+
     jzazbz_vals = JZAZBZ_ARRAY_NPY[r, g, b]
     jzazbz_array = jzazbz_vals.reshape(list(rgb_array.shape[:3])).transpose([0, 1, 2])
     return jzazbz_array

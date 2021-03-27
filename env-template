@@ -1,0 +1,20 @@
+# Where to store data locally, for instance can use an external hardrive
+export COMPSYN_WORK_DIR=
+
+# Path to the jzazbz_array.npy file (see README)
+export COMPSYN_JZAZBZ_ARRAY=
+
+# Browser to use in selenium webdriver
+export COMPSYN_DRIVER_BROWSER=
+
+# Path to driver executable to use in selenium webdriver
+export COMPSYN_DRIVER_PATH=
+
+# Name to associate with the data generated on this machine (uses hostname by default)
+export COMPSYN_HOSTNAME=${HOSTNAME}
+
+# comp-syn-group s3 user for shared backend, these are "secret" values
+export COMPSYN_S3_ACCESS_KEY_ID=
+export COMPSYN_S3_SECRET_ACCESS_KEY=
+export COMPSYN_S3_REGION_NAME=
+export COMPSYN_S3_BUCKET=
