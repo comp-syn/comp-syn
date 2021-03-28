@@ -70,7 +70,7 @@ def set_env_var(key: str, val: Optional[str]) -> None:
             # already unset
             pass
     else:
-        os.environ[key] = val
+        os.environ[key] = str(val)
         log.debug(f"set {key} environment variable")
 
 
@@ -103,6 +103,11 @@ def env_default(envvar):
 
 def compress_image(image_path: Path, quality: int = 30) -> Path:
     """ Common image compression strategy using PIL Image.save quality """
+    import warnings
+
+    warnings.filterwarnings(
+        action="ignore", message="Implicitly cleaning", category=ResourceWarning
+    )
 
     image = Image.open(image_path)
 

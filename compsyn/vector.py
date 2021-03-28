@@ -4,7 +4,7 @@ import pickle
 from pathlib import Path
 
 from .logger import get_logger
-from .trial import Trial, get_trial
+from .trial import Trial, get_trial_from_env
 from .s3 import (
     upload_file_to_s3,
     download_file_from_s3,
@@ -12,6 +12,7 @@ from .s3 import (
     NoObjectInS3Error,
 )
 from .utils import human_bytes
+from .config import CompsynConfig
 
 
 class VectorNotGeneratedError(Exception):
@@ -55,17 +56,20 @@ class Vector:
     ) -> None:
         #: label for the vector
         self.label = label
-        #: optional revision string to use for saving to a shared backend
-        if revision is None:
-            self.revision = "unnamed"
-        else:
-            self.revision = revision
         #: experiment metadata to associate with results can be configured through a Trial dataclass
         if trial is None:
-            # default to getting trial metadata from the environment
-            self.trial = get_trial()
+            # default to getting trial metadata from the environment, or using defaults
+            # this is mean to provide a frictionless entry into using compsyn, most
+            # Vector subclasses should be passed a `Trial` object.
+            self.trial = get_trial_from_env()
         else:
             self.trial = trial
+        #: revision string to use for saving to a shared backend
+        if revision is None:
+            # by default, we use a composite of the trial metadata to form the revision
+            self.revision = "-".join([self.trial.trial_id, self.trial.hostname])
+        else:
+            self.revision = revision
 
         #: other metadata can also be tracked by directly passing it
         self.metadata = metadata
@@ -86,7 +90,10 @@ class Vector:
     @property
     def _local_pickle_path(self) -> Path:
         #: local path for saving and loading from a pickle
-        return self.trial.work_dir.joinpath(self.vector_pickle_path)
+
+        return Path(CompsynConfig().config["work_dir"]).joinpath(
+            self.vector_pickle_path
+        )
 
     @property
     def vector_pickle_path(self) -> Path:

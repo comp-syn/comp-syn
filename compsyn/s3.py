@@ -137,6 +137,11 @@ def list_object_paths_in_s3(s3_prefix: Path) -> Generator[Path]:
 
 def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) -> None:
     """ By default, existing S3 objects are not overwritten """
+    import warnings
+
+    warnings.filterwarnings(
+        action="ignore", message="unclosed", category=ResourceWarning
+    )
 
     s3_args, unknown = get_s3_args().parse_known_args()
     s3_client = get_s3_client(s3_args)
@@ -170,6 +175,12 @@ def download_file_from_s3(
     local_path: Path, s3_path: Path, overwrite: bool = False
 ) -> None:
     """ By default, local Paths are not overwritten """
+
+    import warnings
+
+    warnings.filterwarnings(
+        action="ignore", message="unclosed", category=ResourceWarning
+    )
 
     s3_args, unknown = get_s3_args().parse_known_args()
     s3_client = get_s3_client(s3_args)

@@ -42,7 +42,7 @@ def get_browser_args(
         "--driver-browser",
         type=str,
         action=env_default("COMPSYN_DRIVER_BROWSER"),
-        default="Firefox",
+        default="Chrome",
         help="Browser name, e.g. Firefox, Chrome",
     )
 
@@ -50,7 +50,7 @@ def get_browser_args(
         "--driver-path",
         type=str,
         action=env_default("COMPSYN_DRIVER_PATH"),
-        default="/usr/local/bin/geckodriver",
+        default="chromedriver",
         help="Browser driver path",
     )
 
@@ -240,7 +240,7 @@ class UnexpectedHTMLResponseFromImgSrcError(Exception):
     pass
 
 
-def save_image(folder_path: str, url: str) -> None:
+def save_image(folder_path: str, url: str, timeout: int = 10) -> None:
 
     """
         Try to download the image correspond to the url scraped from the function, fetch_image_urls. 
@@ -250,7 +250,9 @@ def save_image(folder_path: str, url: str) -> None:
 
     log = get_logger("save_image")
 
-    resp = requests.get(url)
+    log.debug(url)
+
+    resp = requests.get(url, timeout=timeout)
     image_content = resp.content
 
     image_file = io.BytesIO(image_content)
@@ -341,7 +343,9 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
        img_urls_dict: dictionary containing image_urls
     """
 
-    get_logger("run_google_vision").info("Classifying Imgs. w. Google Vision API...")
+    log = get_logger("run_google_vision")
+
+    log.info("Classifying Imgs. w. Google Vision API...")
 
     # copy environment variable from configuration to the name where google API expects to find it
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
@@ -355,6 +359,7 @@ def run_google_vision(img_urls_dict: Dict[str, List[str]]) -> Dict[str, Dict[str
         img_urls = img_urls_dict[search_term]
         img_classified_dict = {}
         img_classified_dict[search_term] = {}
+        log.info(f"Classifying {len(img_urls)} images for {search_term}")
 
         for image_uri in img_urls:
             try:
@@ -393,7 +398,9 @@ def write_img_classifications_to_file(
 
     log = get_logger("write_img_classifications_to_file")
 
-    base_dir = CompsynConfig().workdir.joinpath("image_classifications")
+    base_dir = Path(CompsynConfig().config["work_dir"]).joinpath(
+        "image_classifications"
+    )
 
     for term in search_terms:
         term_data = img_classified_dict[term]

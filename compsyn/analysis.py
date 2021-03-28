@@ -1,4 +1,4 @@
-# analysis code
+from __future__ import annotations
 
 import time
 import os
@@ -65,7 +65,7 @@ class ImageAnalysis:
 
     def compute_color_distributions(
         self,
-        labels="default",
+        labels=None,
         color_rep=["jzazbz", "hsv", "rgb"],
         spacing=36,
         num_bins=8,
@@ -99,7 +99,7 @@ class ImageAnalysis:
         assert (
             self.image_data.compress_dims is not None
         ), "Must set compress_dims on ImageData to carry out analysis"
-        if labels == "default":
+        if labels is None:
             labels = self.labels_list
         labels = labels if isinstance(labels, list) else [labels]
         self.log.debug(f"compute_color_distributions for {labels}")
@@ -398,8 +398,8 @@ class ImageAnalysis:
         """
         compressed_img_dict = {}
         img_data = self.image_data.rgb_dict
-        if not labels:
-            labels = img_data.keys()
+        if labels is None:
+            labels = self.labels_list
         for label in labels:
             self.log.info(label + " is being compressed.")
             total_images = len(img_data[label])
@@ -431,3 +431,28 @@ class ImageAnalysis:
                     self.compressed_img_dict[img].astype(np.uint8)
                 )
                 colorgram.save(os.path.join("colorgrams", img + "_colorgram.png"))
+
+
+def merge_vectors_to_image_analysis(vectors: List[WordToColorVector]) -> ImageAnalysis:
+    """ Take a list of WordToColorVector objects and return an image analysis object combining each of their data """
+
+    log = get_logger("merge_image_analysis")
+
+    initial_vector = vectors[0]
+
+    merged_image_data = initial_vector.image_data
+
+    for vector in vectors[1:]:
+        label = vector.label
+        merged_image_data.labels_list.append(label)
+        merged_image_data.rgb_dict[label] = vector.image_data.rgb_dict[label]
+        merged_image_data.jzazbz_dict[label] = vector.image_data.jzazbz_dict[label]
+
+    log.info(f"merged ImageData from {len(vectors)} WordToColorVector objects")
+
+    image_analysis = ImageAnalysis(merged_image_data)
+
+    image_analysis.compute_color_distributions(color_rep=["jzazbz", "rgb"])
+    image_analysis.get_composite_image()
+
+    return image_analysis

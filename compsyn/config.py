@@ -8,8 +8,9 @@ from .logger import get_logger
 from .helperfunctions import get_browser_args, get_google_application_args
 from .s3 import get_s3_args
 from .jzazbz import get_jzazbz_args
-from .trial import get_trial_args
-from .utils import set_env_var, get_logger_args
+from .utils import set_env_var, get_logger_args, env_default
+
+DEFAULT_WORK_DIR = Path(__file__).parents[1]
 
 
 class CompsynConfig:
@@ -23,11 +24,14 @@ class CompsynConfig:
     ) -> None:
         self.show_secret_values = show_secret_values
         self.config = dict()
+        self.log = get_logger(self.__class__.__name__)
 
         # fill argument values according to argparse config
         for key, val in self.args.items():
             set_env_var(key, val)
             self.config[key] = val
+
+        Path(self.config["work_dir"]).mkdir(exist_ok=True, parents=True)
 
         # overwrite argparse values with those called in code
         for key, val in kwargs.items():
@@ -36,9 +40,7 @@ class CompsynConfig:
 
         for required_path in ["jzazbz_array"]:
             if not Path(self.config["jzazbz_array"]).is_file():
-                raise FileNotFoundError(
-                    f"{self.config['jzazbz_array']} does not exist!"
-                )
+                self.log.warning(f"{self.config['jzazbz_array']} does not exist!")
 
     def __repr__(self) -> str:
         """ A nice human readable representation """
@@ -62,10 +64,22 @@ class CompsynConfig:
     def args(self) -> List[str]:
         """ Accumulate argparsers here """
         parser = argparse.ArgumentParser()
+
+        root_parser = parser.add_argument_group("root")
+
+        root_parser.add_argument(
+            "--work-dir",
+            type=str,
+            action=env_default("COMPSYN_WORK_DIR"),
+            default=str(DEFAULT_WORK_DIR),
+            help="Root working directory for storing data locally",
+        )
+
         get_jzazbz_args(parser)
         get_google_application_args(parser)
         get_browser_args(parser)
         get_s3_args(parser)
         get_logger_args(parser)
+
         args, unknown = parser.parse_known_args()
         return vars(args)

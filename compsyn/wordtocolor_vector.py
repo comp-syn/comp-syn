@@ -13,6 +13,7 @@ import PIL
 import numpy as np
 import matplotlib.pyplot as plt
 
+from .config import CompsynConfig
 from .datahelper import ImageData, rgb_array_to_jzazbz_array
 from .analysis import ImageAnalysis
 from .vector import Vector
@@ -29,7 +30,9 @@ class WordToColorVector(Vector):
         self.image_analysis: Union[None, ImageAnalysis] = None
         self.number_of_images = number_of_images
         self.log = get_logger(self.__class__.__name__ + f".{self.label}")
-        self._local_raw_images_path = self.trial.work_dir.joinpath(self.raw_images_path)
+        self._local_raw_images_path = Path(CompsynConfig().config["work_dir"]).joinpath(
+            self.raw_images_path
+        )
         self.raw_image_urls = None
         self.log.debug(f"local downloads: {self._local_raw_images_path}")
 
@@ -108,12 +111,20 @@ class WordToColorVector(Vector):
             number_images=100,
         )
 
+    def load_data(self, **kwargs) -> None:
+        try:
+            self.image_data = ImageData()
+            self.image_data.load_image_dict_from_folder(
+                path=self._local_raw_images_path, label=self.label, **kwargs
+            )
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                f"No data found to load, run an image capture with run_image_capture"
+            )
+
     def run_analysis(self, **kwargs) -> None:
 
-        self.image_data = ImageData()
-        self.image_data.load_image_dict_from_folder(
-            path=self._local_raw_images_path, label=self.label, **kwargs
-        )
+        self.load_data()
 
         self.image_analysis = ImageAnalysis(self.image_data)
         self.image_analysis.compute_color_distributions(self.label, ["jzazbz", "rgb"])
@@ -188,6 +199,7 @@ class WordToColorVector(Vector):
             overwrite=overwrite,
         )
         compressed_image_path.unlink()
+        compressed_image_path.parent.rmdir()
 
     def push(
         self, include_raw_images: bool = False, overwrite: bool = False, **kwargs

@@ -47,14 +47,6 @@ def get_trial_args(
         default=datetime.utcnow().strftime("%Y-%m-%d"),
         help="Usually this should be unset, as the code will record the current time.",
     )
-    trial_parser.add_argument(
-        "--work-dir",
-        type=str,
-        action=env_default("COMPSYN_WORK_DIR"),
-        required=False,
-        help="Root working directory for storing data locally",
-    )
-
     return parser
 
 
@@ -75,7 +67,6 @@ class Trial:
         trial_id: str,
         hostname: Optional[str],
         trial_timestamp: Optional[str] = None,
-        work_dir: Optional[Path] = None,
     ) -> None:
 
         #: An over-arching experiment_name can be used to facilitate multi-trial data collection efforts
@@ -90,19 +81,8 @@ class Trial:
         if trial_timestamp is None:
             trial_timestamp = datetime.utcnow().strftime("%Y-%m-%d")
         self.trial_timestamp = trial_timestamp
-        #: The local root working directory
-        if work_dir is None:
-            work_dir = os.getenv("COMPSYN_WORK_DIR")
-            if work_dir is None:
-                work_dir = tempfile.TemporaryDirectory().name
-                get_logger(self.__class__.__name__).warning(
-                    f"no work_dir passed, using a temporary directory: {work_dir}"
-                )
-        self.work_dir = Path(work_dir)
-        self.work_dir.mkdir(exist_ok=True, parents=True)
 
         self.log = get_logger(self.__class__.__name__)
-        self.log.info(f"work_dir: {self.work_dir}")
         self.log.info(f"experiment: {self.experiment_name}")
         self.log.info(f"trial_id: {self.trial_id}")
         self.log.info(f"hostname: {self.hostname}")
@@ -116,7 +96,7 @@ class Trial:
         return representation
 
 
-def get_trial() -> Trial:
+def get_trial_from_env() -> Trial:
     """
     This method achieves two things:
       1. the Trial object can be configured from the environment,
@@ -129,5 +109,4 @@ def get_trial() -> Trial:
         trial_id=trial_args.trial_id,
         hostname=trial_args.hostname,
         trial_timestamp=trial_args.trial_timestamp,
-        work_dir=trial_args.work_dir,
     )
