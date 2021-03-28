@@ -386,7 +386,9 @@ def write_to_json(to_save: Dict[str, Any], filename: str) -> None:
 
 
 def write_img_classifications_to_file(
-    search_terms: List[str], img_classified_dict: Dict[str, Any]
+    work_dir: Union[str, Path],
+    search_terms: List[str],
+    img_classified_dict: Dict[str, Any],
 ) -> None:
     """
        Store Google vision's classifications for images in a json file, which can then be retrieved for 
@@ -398,9 +400,8 @@ def write_img_classifications_to_file(
 
     log = get_logger("write_img_classifications_to_file")
 
-    base_dir = Path(CompsynConfig().config["work_dir"]).joinpath(
-        "image_classifications"
-    )
+    base_dir = Path(work_dir).joinpath("image_classifications")
+    base_dir.mkdir(exist_ok=True, parents=True)
 
     for term in search_terms:
         term_data = img_classified_dict[term]
