@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import gzip
 import os
+from pathlib import Path
 
+import PIL
 import colorsys
 import matplotlib.cm as cm
 import matplotlib.colors as colors
@@ -16,6 +20,7 @@ from scipy.ndimage import gaussian_filter
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 
+from .logger import get_logger
 
 cmap = cm.plasma(np.linspace(0.0, 0.5, 3))
 sch.set_link_color_palette([colors.rgb2hex(rgb[:3]) for rgb in cmap])
@@ -33,6 +38,7 @@ class Visualisation:
         self.jzazbz_dict = self.image_analysis.jzazbz_dict
         self.labels_list = self.image_analysis.labels_list
         self.rgb_ratio_dict = self.image_analysis.rgb_ratio_dict
+        self.log = get_logger(self.__class__.__name__)
 
     def jzazbz_color_distribution(self, label, num_channels=3):
         """
@@ -187,7 +193,7 @@ class Visualisation:
             self.image_analysis.cross_entropy_between_labels_matrix_js
         )
 
-        D = np.log2(np.exp(np.matrix(self.cross_entropy_between_labels_matrix_js)))
+        D = np.log2(np.exp(np.array(self.cross_entropy_between_labels_matrix_js)))
         condensedD = squareform(D)
 
         # Compute and plot first dendrogram.
@@ -247,7 +253,7 @@ class Visualisation:
         if plot_colorbar:
             axcolor = fig.add_axes([1.1, 0.1, 0.02, 0.6])
             cbar = pylab.colorbar(im, cax=axcolor)
-            cbar.ax.set_yticks([0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03])
+            cbar.set_ticks([0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03])
             cbar.ax.set_yticklabels(
                 ["0", "", "0.01", "", "0.02", "", "0.03"], fontsize=12
             )
@@ -271,17 +277,13 @@ class Visualisation:
 
         self.jzazbz_dict_simp = self.image_analysis.jzazbz_dict_simp
 
-        jzbzaz_keys = np.array(list(self.jzazbz_dict_simp.keys()))
-        jzbzaz_dists = np.array([np.array(x) for x in self.jzazbz_dict_simp.values()])
+        jzazbz_keys = np.array(list(self.jzazbz_dict_simp.keys()))
+        jzazbz_dists = np.array([np.array(x) for x in self.jzazbz_dict_simp.values()])
 
         plot_perplexity = 2  # manually set perplexity
         X_embedded = TSNE(n_components=2, perplexity=plot_perplexity).fit_transform(
-            jzbzaz_dists
+            jzazbz_dists
         )  # manually set perplexity
-
-        paths = []
-        for key in jzbzaz_keys:
-            paths.extend(np.array(["colorgrams/{}".format(key) + "_colorgram.png"]))
 
         fig, ax = plt.subplots(figsize=(14, 14))
 
@@ -289,8 +291,15 @@ class Visualisation:
         y = X_embedded[:, 1]  # /np.max(np.abs(X_embedded[:,1]))
         ax.scatter(x, y)
 
-        for x0, y0, path in zip(x, y, paths):
-            ab = AnnotationBbox(getImage(path), (x0, y0), frameon=False)
+        import tempfile
+
+        temp_dir = tempfile.TemporaryDirectory().name
+        for x0, y0, label in zip(x, y, jzazbz_keys):
+            temp_file = Path(temp_dir).joinpath(label)
+            PIL.Image.fromarray(self.image_analysis.compressed_img_dict[label]).save(
+                str(temp_file)
+            )
+            ab = AnnotationBbox(getImage(tmp_file), (x0, y0), frameon=False)
             ax.add_artist(ab)
 
         plt.xticks([])

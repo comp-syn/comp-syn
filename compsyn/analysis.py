@@ -192,7 +192,11 @@ class ImageAnalysis:
                     g = np.sum(np.ravel(imageset[i][:, :, 1]))
                     b = np.sum(np.ravel(imageset[i][:, :, 2]))
                     tot = 1.0 * r + g + b
-                    rgb.append([r / tot, g / tot, b / tot])
+                    try:
+                        rgb.append([r / tot, g / tot, b / tot])
+                    except RuntimeWarning as exc:
+                        self.log.warning(f"{exc}, skipping image {i}/{len(imageset)}")
+                        continue
                     dist = np.ravel(
                         np.histogramdd(
                             np.reshape(
@@ -257,6 +261,8 @@ class ImageAnalysis:
             self.cross_entropy_between_all_images_dict (dictionary): dictionary of JS divergence values between all images for all labels in JzAzBz
             self.cross_entropy_between_all_images_matrix (arraay of arrays): : matrix of JS divergence values between all images for all labels in JzAzBz
         """
+        self.log.info("performing entropy calculations")
+
         jzazbz_dist_dict = self.jzazbz_dist_dict
 
         if between_labels:
