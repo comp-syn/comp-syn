@@ -41,3 +41,5 @@ Notes
 
 To use the package one would need to download the JzAzBz array to convert the images to the appropriate vector form. It can be downloaded here (`link <https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view>`_). We provide sample images downloaded from Google Images to test the functionality.
 
+For using pre-computed JzAzBz and RGB color distributions for words, please download (`link for vectors <https://drive.google.com/file/d/13J3QHn4NPdCTEkTctVYFqfYYJEMAOgAT/view?usp=sharing>`_) and (`link for concreteness values <https://drive.google.com/file/d/1edQaibCW9yCih_pVeeYZWzPlgNZJ4Fzp/view?usp=sharing>`_).
+
