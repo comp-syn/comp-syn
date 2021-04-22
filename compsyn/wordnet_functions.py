@@ -202,9 +202,9 @@ def get_wordnet_tree_data(search_terms, home, get_trees=True):
             os.chdir(home)
             return final_wordlist, tree, tree_data
 
-        except:
+        except Exception as exc:
             os.chdir(home)
-            log.warning("No tree available")
+            log.error(f"No tree available due to error {exc}")
             return wordlist, {}, {}
 
     else:

@@ -23,23 +23,77 @@ We currently provide functionality to download and organise image data to be loa
 Installation
 ~~~~~~~~~~~~
 
+In a virtual environment:
+
 Run ``pip install compsyn`` to download and install from PyPI.
+
+Run ``pip install -r requirements.txt`` to install from the last-pinned dependencies.
 
 Run ``python setup.py install`` for default installation.
 
 Run ``pip install .`` to install from source.
 
+With `poetry <https://python-poetry.org/>_`:
 
-Dependencies
+Run ``poetry install``
+
+
+Requirements
 ~~~~~~~~~~~~
 
--  Python 2.7+, 3.4+
--  numpy, scipy, scikit-learn, matplotlib, PIL
+-  Python 3.4+
+-  ``jzazbz_array.npy`` available here: `link <https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view>`_ 
+-  A webdriver, like `geckodriver <https://github.com/mozilla/geckodriver/releases>`_ or `chromedriver <https://chromedriver.chromium.org/>`_.
+
+
+Configuration
+~~~~~~~~~~~~~
+
+``compsyn`` requires some configuration be set, more details are available in the configuration notebook.
 
 Notes
 ~~~~~
 
 To use the package one would need to download the JzAzBz array to convert the images to the appropriate vector form. It can be downloaded here (`link <https://drive.google.com/file/d/1wspjIBzzvO-ZQbiQs3jgN4UETMxTVD2c/view>`_). We provide sample images downloaded from Google Images to test the functionality.
+
+
+
+Contributing
+~~~~~~~~~~~~
+
+Contributions to compsyn should use docstrings to document each package/class/method being contributed. Tests should also be implemented for as much of the code as possible.
+
+
+Tests with ``pytest`` - 
+
+To run pytest, first install it (``pip install pytest pytest-cov pytest-depends``). By default, pytest will run every method found in the ``tests`` directory that has the name prefix ``test_``. Tests should also be marked with one of the following decorators: 
+
+  - ``@pytest.mark.unit`` for testing the smallest units of functionality. These tests should be fast, and involve as few dependencies as possible to test each specific method being implemented.
+  - ``@pytest.mark.integration`` for testing more abstracted interfaces into compsyn, these tests will involve multiple compsyn code paths being executed as part of some higher order logic. These tests should still be fast, and should not involve external networking.
+  - ``@pytest.mark.online`` for testing parts of compsyn that involve network requests. These tests can be arbitrarily complex, and may be slow to run.
+
+by default, all test types will be run by ``pytest``
+
+``pytest --cov=compsyn``
+
+Specific test can be targetted by path and mark,
+
+``pytest -m unit ./tests/test_utils.py``
+
+Compsyn V1.0.0
+~~~~~~~~~~~~~~
+
+- New image analysis techniques (wavelet with PCA)
+- Introduces the Trial dataclass for creating logically separated datasets
+- Optional shared backend via S3, trials can be saved with specific "revision" names, data easily shared
+- Re-worked notebooks as documentation of the API to Vectors
+
+
+Shared Backend with S3
+~~~~~~~~~~~~~~~~~~~~~~
+
+- raw data and Vector objects can be saved remotely for collaboration
+- saving vectors or data to the backend is done by creating a "revision"
 
 For using pre-computed JzAzBz and RGB color distributions for words, please download (`link for vectors <https://drive.google.com/file/d/13J3QHn4NPdCTEkTctVYFqfYYJEMAOgAT/view?usp=sharing>`_) and (`link for concreteness values <https://drive.google.com/file/d/1edQaibCW9yCih_pVeeYZWzPlgNZJ4Fzp/view?usp=sharing>`_).
 

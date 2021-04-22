@@ -8,3 +8,10 @@ notebooks/colorgrams
 *.ipynb_checkpoints
 *.swp
 compsyn.log
+Figures
+geckodriver.log
+no-experiment-name
+.DS_Store
+shared-env
+.coverage*
+build/

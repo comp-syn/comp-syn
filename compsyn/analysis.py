@@ -1,4 +1,4 @@
-# analysis code
+from __future__ import annotations
 
 import time
 import os
@@ -11,6 +11,7 @@ import matplotlib.colors as mplcolors
 from numba import jit
 
 from .logger import get_logger
+from .datahelper import ImageData
 
 
 def kl_divergence(dist1, dist2, symmetrized=True):
@@ -54,8 +55,8 @@ def js_divergence(dist1, dist2):
 
 
 class ImageAnalysis:
-    def __init__(self, image_data):
-        # assert isinstance(image_data, compsyn.ImageData)
+    def __init__(self, image_data: ImageData):
+        assert isinstance(image_data, ImageData)
         self.image_data = image_data
         self.jzazbz_dict = image_data.jzazbz_dict
         self.rgb_dict = image_data.rgb_dict
@@ -64,7 +65,7 @@ class ImageAnalysis:
 
     def compute_color_distributions(
         self,
-        labels="default",
+        labels=None,
         color_rep=["jzazbz", "hsv", "rgb"],
         spacing=36,
         num_bins=8,
@@ -95,10 +96,13 @@ class ImageAnalysis:
         Returns:
             self (class instace): ImageAnalysis class instance containing JzAzBz, HSV, and RGB distributions for each word
         """
-        dims = self.image_data.dims
-        if labels == "default":
+        assert (
+            self.image_data.compress_dims is not None
+        ), "Must set compress_dims on ImageData to carry out analysis"
+        if labels is None:
             labels = self.labels_list
         labels = labels if isinstance(labels, list) else [labels]
+        self.log.debug(f"compute_color_distributions for {labels}")
         self.jzazbz_dist_dict, self.hsv_dist_dict = {}, {}
         self.rgb_ratio_dict, self.rgb_dist_dict = {}, {}
         color_rep = [i.lower() for i in color_rep]
@@ -118,7 +122,12 @@ class ImageAnalysis:
                     dist = np.ravel(
                         np.histogramdd(
                             np.reshape(
-                                imageset[i][:, :, :], (dims[0] * dims[1], num_channels)
+                                imageset[i][:, :, :],
+                                (
+                                    self.image_data.compress_dims[0]
+                                    * self.image_data.compress_dims[1],
+                                    num_channels,
+                                ),
                             ),
                             bins=(
                                 np.linspace(
@@ -183,10 +192,21 @@ class ImageAnalysis:
                     g = np.sum(np.ravel(imageset[i][:, :, 1]))
                     b = np.sum(np.ravel(imageset[i][:, :, 2]))
                     tot = 1.0 * r + g + b
-                    rgb.append([r / tot, g / tot, b / tot])
+                    try:
+                        rgb.append([r / tot, g / tot, b / tot])
+                    except RuntimeWarning as exc:
+                        self.log.warning(f"{exc}, skipping image {i}/{len(imageset)}")
+                        continue
                     dist = np.ravel(
                         np.histogramdd(
-                            np.reshape(imageset[i], (dims[0] * dims[1], num_channels)),
+                            np.reshape(
+                                imageset[i],
+                                (
+                                    self.image_data.compress_dims[0]
+                                    * self.image_data.compress_dims[1],
+                                    num_channels,
+                                ),
+                            ),
                             bins=(
                                 np.linspace(
                                     0,
@@ -241,6 +261,8 @@ class ImageAnalysis:
             self.cross_entropy_between_all_images_dict (dictionary): dictionary of JS divergence values between all images for all labels in JzAzBz
             self.cross_entropy_between_all_images_matrix (arraay of arrays): : matrix of JS divergence values between all images for all labels in JzAzBz
         """
+        self.log.info("performing entropy calculations")
+
         jzazbz_dist_dict = self.jzazbz_dist_dict
 
         if between_labels:
@@ -382,8 +404,8 @@ class ImageAnalysis:
         """
         compressed_img_dict = {}
         img_data = self.image_data.rgb_dict
-        if not labels:
-            labels = img_data.keys()
+        if labels is None:
+            labels = self.labels_list
         for label in labels:
             self.log.info(label + " is being compressed.")
             total_images = len(img_data[label])
@@ -415,3 +437,28 @@ class ImageAnalysis:
                     self.compressed_img_dict[img].astype(np.uint8)
                 )
                 colorgram.save(os.path.join("colorgrams", img + "_colorgram.png"))
+
+
+def merge_vectors_to_image_analysis(vectors: List[WordToColorVector]) -> ImageAnalysis:
+    """ Take a list of WordToColorVector objects and return an image analysis object combining each of their data """
+
+    log = get_logger("merge_image_analysis")
+
+    initial_vector = vectors[0]
+
+    merged_image_data = initial_vector.image_data
+
+    for vector in vectors[1:]:
+        label = vector.label
+        merged_image_data.labels_list.append(label)
+        merged_image_data.rgb_dict[label] = vector.image_data.rgb_dict[label]
+        merged_image_data.jzazbz_dict[label] = vector.image_data.jzazbz_dict[label]
+
+    log.info(f"merged ImageData from {len(vectors)} WordToColorVector objects")
+
+    image_analysis = ImageAnalysis(merged_image_data)
+
+    image_analysis.compute_color_distributions(color_rep=["jzazbz", "rgb"])
+    image_analysis.get_composite_image()
+
+    return image_analysis

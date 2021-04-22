@@ -2,52 +2,51 @@
 # -*- coding: utf-8 -*-
 # Licensed under the MIT License - https://opensource.org/licenses/MIT
 
-from setuptools import setup
+from __future__ import annotations
 
-DESCRIPTION = ''
-with open('README.rst') as f:
+import toml
+from pathlib import Path
+from setuptools import setup
+import subprocess
+
+with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
 
-version = "0.2.2"
-setup(name='compsyn',
-      version=version,
-      description='python package to explore the color of language',
-      author='Bhargav Srinivasa Desikan',
-      author_email='bhargavvader@gmail.com',
-      url='https://github.com/comp-syn/comp-syn',
-      license='MIT',
-      classifiers=[
-          'Development Status :: 4 - Beta',
-          'License :: OSI Approved :: MIT License',
-          'Programming Language :: Python',
-          'Operating System :: OS Independent',
-          'Intended Audience :: Science/Research',
-          'Topic :: Scientific/Engineering'
-      ],
-      packages=['compsyn'],
-      install_requires=[
-          'black',
-          'numpy',
-          'scipy',
-          'pillow',
-          'matplotlib',
-          'memory_profiler',
-          'numba',
-          'seaborn',
-          'scikit-learn',
-          'google_images_download', #for downloading images
-          'google-cloud-vision',
-          'textblob',
-          'nltk',
-          'random_word',
-          'selenium',  
-          'bs4'
-      ],
-      keywords=[
-          'Image Analysis',
-          'Computational Synaesthesia',
-          'Color Science',
-          'Computational Social Science'
-          'Cognitive Science'
-      ],
-      long_description=LONG_DESCRIPTION)
+
+PYPROJECT = toml.loads(Path(__file__).parent.joinpath("pyproject.toml").read_text())
+
+
+def install_requires() -> List[str]:
+    """ Populate install_requires from requirements.txt """
+    requirements_txt = Path(__file__).parent.joinpath("requirements.txt").read_text()
+
+    return [requirement for requirement in requirements_txt.split("\n")]
+
+
+setup(
+    name=PYPROJECT["tool"]["poetry"]["name"],
+    version=PYPROJECT["tool"]["poetry"]["version"],
+    description=PYPROJECT["tool"]["poetry"]["description"],
+    author="Compsyn Group",
+    author_email="group@comp-syn.com",
+    url="https://github.com/comp-syn/comp-syn",
+    license="MIT",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Operating System :: OS Independent",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering",
+    ],
+    packages=["compsyn"],
+    install_requires=install_requires(),
+    keywords=[
+        "Image Analysis",
+        "Computational Synaesthesia",
+        "Color Science",
+        "Computational Social Science",
+        "Cognitive Science",
+    ],
+    long_description=LONG_DESCRIPTION,
+)
