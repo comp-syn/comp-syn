@@ -9,49 +9,10 @@ import numpy as np
 import scipy.stats
 import matplotlib.colors as mplcolors
 from numba import jit
+from color import *
 
 from .logger import get_logger
 from .datahelper import ImageData
-
-
-def kl_divergence(dist1, dist2, symmetrized=True):
-    """
-    Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
-
-    Args:
-        dist1 (array): first distribution
-        dist2 (array): second distribution
-        symmetrized (Boolean): flag that defaults to symmetrized KL divergence, and returns non-symmetrized version if False
-
-    Returns:
-        kl (float): (symmetrized) KL divergence
-    """
-    if symmetrized == True:
-        kl = (
-            scipy.stats.entropy(dist1, dist2) + scipy.stats.entropy(dist2, dist1)
-        ) / 2.0
-        return kl
-    else:
-        kl = scipy.stats.entropy(dist1, dist2)
-        return kl
-
-
-def js_divergence(dist1, dist2):
-    """
-    Calculates Jensen-Shannon (JS) divergence between two distributions
-
-    Args:
-        dist1 (array): first distribution
-        dist2 (array): second distribution
-
-    Returns:
-        js (float): JS divergence
-    """
-    mean_dist = (dist1 + dist2) / 2.0
-    js = (
-        scipy.stats.entropy(dist1, mean_dist) + scipy.stats.entropy(dist2, mean_dist)
-    ) / 2.0
-    return js
 
 
 class ImageAnalysis:
@@ -119,36 +80,7 @@ class ImageAnalysis:
                 imageset = self.jzazbz_dict[key]
                 for i in range(len(imageset)):
                     jzazbz.append(imageset[i])
-                    dist = np.ravel(
-                        np.histogramdd(
-                            np.reshape(
-                                imageset[i][:, :, :],
-                                (
-                                    self.image_data.compress_dims[0]
-                                    * self.image_data.compress_dims[1],
-                                    num_channels,
-                                ),
-                            ),
-                            bins=(
-                                np.linspace(
-                                    Jz_min,
-                                    Jz_max,
-                                    1 + int(num_bins ** (1.0 / num_channels)),
-                                ),
-                                np.linspace(
-                                    Az_min,
-                                    Az_max,
-                                    1 + int(num_bins ** (1.0 / num_channels)),
-                                ),
-                                np.linspace(
-                                    Bz_min,
-                                    Bz_max,
-                                    1 + int(num_bins ** (1.0 / num_channels)),
-                                ),
-                            ),
-                            density=True,
-                        )[0]
-                    )
+                    dist = color_distribution(imageset[i],"jzazbz")
                     if True in np.isnan(dist):
                         # Drop any dists that contain NaN
                         continue
@@ -165,16 +97,12 @@ class ImageAnalysis:
                 imageset = self.rgb_ratio_dict[key]
                 dist_array, h, s, v = [], [], [], []
                 for i in range(len(imageset)):
-                    hsv_array = mplcolors.rgb_to_hsv(imageset[i] / (1.0 * rgb_max))
-                    dist = np.histogram(
-                        1.0 * h_max * np.ravel(hsv_array[:, :, 0]),
-                        bins=np.arange(0, h_max + spacing, spacing),
-                        density=True,
-                    )[0]
+                    dist = color_distribution(imageset[i],"hsv")
                     dist_array.append(dist)
-                    h.append(np.mean(np.ravel(hsv_array[:, :, 0])))
-                    s.append(np.mean(np.ravel(hsv_array[:, :, 1])))
-                    v.append(np.mean(np.ravel(hsv_array[:, :, 2])))
+                    h_temp, s_temp, v_temp = avg_hsv(imageset[i])
+                    h.append(h_temp)
+                    s.append(s_temp)
+                    v.append(v_temp)
                 self.hsv_dist_dict[key] = dist_array
                 self.h_dict[key], self.s_dict[key], self.v_dict[key] = h, s, v
 
@@ -188,45 +116,13 @@ class ImageAnalysis:
                 rgb = []
                 dist_array = []
                 for i in range(len(imageset)):
-                    r = np.sum(np.ravel(imageset[i][:, :, 0]))
-                    g = np.sum(np.ravel(imageset[i][:, :, 1]))
-                    b = np.sum(np.ravel(imageset[i][:, :, 2]))
-                    tot = 1.0 * r + g + b
+                    rgb_temp = avg_rgb(imageset[i])
                     try:
-                        rgb.append([r / tot, g / tot, b / tot])
+                        rgb.append(rgb_temp)
                     except RuntimeWarning as exc:
                         self.log.warning(f"{exc}, skipping image {i}/{len(imageset)}")
                         continue
-                    dist = np.ravel(
-                        np.histogramdd(
-                            np.reshape(
-                                imageset[i],
-                                (
-                                    self.image_data.compress_dims[0]
-                                    * self.image_data.compress_dims[1],
-                                    num_channels,
-                                ),
-                            ),
-                            bins=(
-                                np.linspace(
-                                    0,
-                                    rgb_max,
-                                    1 + int(num_bins ** (1.0 / num_channels)),
-                                ),
-                                np.linspace(
-                                    0,
-                                    rgb_max,
-                                    1 + int(num_bins ** (1.0 / num_channels)),
-                                ),
-                                np.linspace(
-                                    0,
-                                    rgb_max,
-                                    1 + int(num_bins ** (1.0 / num_channels)),
-                                ),
-                            ),
-                            density=True,
-                        )[0]
-                    )
+                    dist = color_distribution(imageset[i],"rgb")
                     dist_array.append(dist)
                 self.rgb_ratio_dict[key] = rgb
                 self.rgb_dist_dict[key] = dist_array
@@ -282,7 +178,7 @@ class ImageAnalysis:
                     )
                     entropy = kl_divergence(
                         np.mean(np.array(jzazbz_dist_dict[word1]), axis=0),
-                        np.mean(np.array(jzazbz_dist_dict[word1]), axis=0),
+                        np.mean(np.array(jzazbz_dist_dict[word2]), axis=0),
                         symmetrized,
                     )
                     row.append(entropy)
