@@ -21,6 +21,7 @@ from .helperfunctions import get_browser_args, search_and_download
 from .logger import get_logger
 from .s3 import upload_file_to_s3, download_file_from_s3, list_object_paths_in_s3
 from .utils import compress_image
+from .texture import get_wavelet_embedding
 
 
 class WordToColorVector(Vector):
@@ -145,6 +146,10 @@ class WordToColorVector(Vector):
         self.colorgram_vector = self.image_analysis.compressed_img_dict[self.label]
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
+
+        self.jzazbz_wavelet_embedding = get_wavelet_embedding(im=self.colorgram, mode="JzAzBz")
+        self.rgb_wavelet_embedding = get_wavelet_embedding(im=self.colorgram, mode="RGB")
+        self.grey_wavelet_embedding = get_wavelet_embedding(im=self.colorgram, mode="Grey")
 
     def run(self, **kwargs) -> None:
 
