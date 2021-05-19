@@ -10,6 +10,7 @@ from collections import Counter
 
 from .logger import get_logger
 
+
 def kl_divergence(dist1, dist2, symmetrized=True):
     """
     Calculates Kullback-Leibler (KL) divergence between two distributions, with an option for symmetrization
@@ -50,7 +51,8 @@ def js_divergence(dist1, dist2):
     return js
 
 
-class ColorSpaceConversionError(Exception): pass
+class ColorSpaceConversionError(Exception):
+    pass
 
 
 def rgb_array_to_jzazbz_array(rgb_array: np.ndarray) -> np.ndarray:
@@ -77,22 +79,15 @@ def rgb_array_to_jzazbz_array(rgb_array: np.ndarray) -> np.ndarray:
     try:
         jzazbz_vals = JZAZBZ_ARRAY_NPY[r, g, b]
     except IndexError as exc:
-        raise ColorSpaceConversionError(f"input shape: {rgb_array.shape}. One of r:{r}, g:{g}, b:{b} is not an integer. input: {rgb_array}") from exc
-        
+        raise ColorSpaceConversionError(
+            f"input shape: {rgb_array.shape}. One of r:{r}, g:{g}, b:{b} is not an integer. input: {rgb_array}"
+        ) from exc
+
     jzazbz_array = jzazbz_vals.reshape(list(rgb_array.shape[:3])).transpose([0, 1, 2])
     return jzazbz_array
 
 
-def bin_img(
-    img,
-    num_bins,
-    x_min,
-    x_max,
-    y_min,
-    y_max,
-    z_min,
-    z_max,
-    num_channels=3):
+def bin_img(img, num_bins, x_min, x_max, y_min, y_max, z_min, z_max, num_channels=3):
     """
     Calculates the distribution of rgb or JzAzBz pixel values in an image
 
@@ -106,42 +101,20 @@ def bin_img(
         dist (array): distribution of of rgb JzAzBz pixel values in specified bins
     """
     dist = np.ravel(
-            np.histogramdd(
-                        np.reshape(
-                            img[:, :, :],
-                            (
-                                img.shape[0]
-                                * img.shape[1],
-                                num_channels,
-                            ),
-                        ),
-                        bins=(
-                            np.linspace(
-                                x_min,
-                                x_max,
-                                1 + int(num_bins ** (1.0 / num_channels)),
-                            ),
-                            np.linspace(
-                                y_min,
-                                y_max,
-                                1 + int(num_bins ** (1.0 / num_channels)),
-                            ),
-                            np.linspace(
-                                z_min,
-                                z_max,
-                                1 + int(num_bins ** (1.0 / num_channels)),
-                            ),
-                        ),
-                        density=True,
-                    )[0]
-           )
+        np.histogramdd(
+            np.reshape(img[:, :, :], (img.shape[0] * img.shape[1], num_channels,),),
+            bins=(
+                np.linspace(x_min, x_max, 1 + int(num_bins ** (1.0 / num_channels)),),
+                np.linspace(y_min, y_max, 1 + int(num_bins ** (1.0 / num_channels)),),
+                np.linspace(z_min, z_max, 1 + int(num_bins ** (1.0 / num_channels)),),
+            ),
+            density=True,
+        )[0]
+    )
     return dist
 
 
-def bin_hsv(
-    img_hsv,
-    spacing,
-    h_max=360):
+def bin_hsv(img_hsv, spacing, h_max=360):
     """
     Calculates the distribution of hue values in an image
     ​
@@ -154,18 +127,20 @@ def bin_hsv(
         dist (array): distribution of of rgb JzAzBz pixel values in specified bins
     """
     dist = np.histogram(
-                    1.0 * h_max * np.ravel(img_hsv[:, :, 0]),
-                    bins=np.arange(0, h_max + spacing, spacing),
-                    density=True,
-                )[0]
+        1.0 * h_max * np.ravel(img_hsv[:, :, 0]),
+        bins=np.arange(0, h_max + spacing, spacing),
+        density=True,
+    )[0]
     return dist
 
-class UnknownColorSpaceError(Exception): 
+
+class UnknownColorSpaceError(Exception):
     pass
 
 
 class MissingArgumentError(Exception):
     pass
+
 
 def color_distribution(
     img_rgb: np.ndarray,
@@ -179,7 +154,7 @@ def color_distribution(
     Az_max: Optional[float] = None,
     Bz_min: Optional[float] = None,
     Bz_max: Optional[float] = None,
-    h_max: Optional[int] = None, 
+    h_max: Optional[int] = None,
     rgb_max: Optional[int] = None,
 ) -> np.ndarray:
     """
@@ -198,29 +173,46 @@ def color_distribution(
     Returns:
         {}_dist (array): distribution of values (either jzazbz, hsv, or rgb)
     """
+
     def _check_required_args(required_args: List[Any]) -> None:
         for required in required_args:
             try:
                 assert required is not None
             except AssertionError:
-                raise MissingArgumentError("Missing one or more required arguments for computing {colorspace} distribution")
+                raise MissingArgumentError(
+                    "Missing one or more required arguments for computing {colorspace} distribution"
+                )
 
     if colorspace == "jzazbz":
-        _check_required_args([num_bins, Jz_min, Jz_max, Az_min, Az_max, Bz_min, Bz_max, num_channels])
+        _check_required_args(
+            [num_bins, Jz_min, Jz_max, Az_min, Az_max, Bz_min, Bz_max, num_channels]
+        )
         img_jzazbz = rgb_array_to_jzazbz_array(img_rgb)
-        jzazbz_dist = bin_img(img_jzazbz,num_bins,Jz_min,Jz_max,Az_min,Az_max,Bz_min,Bz_max,num_channels)
+        jzazbz_dist = bin_img(
+            img_jzazbz,
+            num_bins,
+            Jz_min,
+            Jz_max,
+            Az_min,
+            Az_max,
+            Bz_min,
+            Bz_max,
+            num_channels,
+        )
         get_logger("color_distribution").debug(f"jzazbz_dist computed: {jzazbz_dist}")
         return jzazbz_dist
 
     elif colorspace == "hsv":
         _check_required_args([rgb_max, h_max, spacing])
         img_hsv = mplcolors.rgb_to_hsv(img_rgb / (1.0 * rgb_max))
-        hsv_dist = bin_hsv(img_hsv,spacing,h_max)
+        hsv_dist = bin_hsv(img_hsv, spacing, h_max)
         return hsv_dist
- 
+
     elif colorspace == "rgb":
         _check_required_args([rgb_max, num_bins, num_channels])
-        rgb_dist = bin_img(img_rgb,num_bins,0,rgb_max,0,rgb_max,0,rgb_max,num_channels)
+        rgb_dist = bin_img(
+            img_rgb, num_bins, 0, rgb_max, 0, rgb_max, 0, rgb_max, num_channels
+        )
         return rgb_dist
 
     else:
@@ -263,30 +255,30 @@ def avg_hsv(img):
     return h, s, v
 
 
-#helper function that converts RGB to HEX string 
+# helper function that converts RGB to HEX string
 def RGB2HEX(color):
-    '''In: RGB color array
-    Out: HEX string'''
+    """In: RGB color array
+    Out: HEX string"""
 
     return "#{:02x}{:02x}{:02x}".format(int(color[0]), int(color[1]), int(color[2]))
 
 
-#function that selects dominant color from image using kmeans 
+# function that selects dominant color from image using kmeans
 def get_color(im):
-    '''In: PIL Image object
+    """In: PIL Image object
     
     Out: Image color
         (string): HEX code 
-        (list): RGB value'''
-    #selects center portion of image 
+        (list): RGB value"""
+    # selects center portion of image
     im = im.crop((100, 100, 200, 200))
-    
-    im = np.array(im)
-    
-    modified_image = im.reshape(im.shape[0]*im.shape[1], 3)
 
-    #OPTIONAL: can be modified here to select more than one color
-    clf = KMeans(n_clusters = 1)
+    im = np.array(im)
+
+    modified_image = im.reshape(im.shape[0] * im.shape[1], 3)
+
+    # OPTIONAL: can be modified here to select more than one color
+    clf = KMeans(n_clusters=1)
     labels = clf.fit_predict(modified_image)
 
     counts = Counter(labels)

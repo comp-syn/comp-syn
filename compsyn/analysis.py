@@ -78,8 +78,8 @@ class ImageAnalysis:
                 dist_array = list()
                 for img_rgb in self.rgb_dict[key]:
                     jzazbz_dist = color_distribution(
-                        img_rgb=img_rgb, 
-                        colorspace="jzazbz", 
+                        img_rgb=img_rgb,
+                        colorspace="jzazbz",
                         num_bins=num_bins,
                         Jz_min=Jz_min,
                         Jz_max=Jz_max,
@@ -87,7 +87,7 @@ class ImageAnalysis:
                         Az_max=Az_max,
                         Bz_min=Bz_min,
                         Bz_max=Bz_max,
-                        num_channels=num_channels
+                        num_channels=num_channels,
                     )
                     if True in np.isnan(jzazbz_dist):
                         # Drop any dists that contain NaN
@@ -104,11 +104,11 @@ class ImageAnalysis:
                 dist_array, h, s, v = list(), list(), list(), list()
                 for img_rgb in self.rgb_dict[key]:
                     dist = color_distribution(
-                        img_rgb=img_rgb, 
+                        img_rgb=img_rgb,
                         colorspace="hsv",
                         rgb_max=rgb_max,
                         spacing=spacing,
-                        h_max=h_max
+                        h_max=h_max,
                     )
                     dist_array.append(dist)
                     h_temp, s_temp, v_temp = avg_hsv(hsv_img)
@@ -124,20 +124,22 @@ class ImageAnalysis:
                 if key not in self.image_data.labels_list:
                     self.log.warning(f"label {key} does not exist")
                     continue
-                rgb = list() 
-                dist_array = list() 
+                rgb = list()
+                dist_array = list()
                 for i, img_rgb in enumerate(self.rgb_dict[key]):
                     try:
                         rgb.append(avg_rgb(img_rgb))
                     except RuntimeWarning as exc:
-                        self.log.warning(f"{exc}, skipping image {i}/{len(self.rgb_dict[key])}")
+                        self.log.warning(
+                            f"{exc}, skipping image {i}/{len(self.rgb_dict[key])}"
+                        )
                         continue
                     dist = color_distribution(
                         img_rgb=img_rgb,
                         colorspace="rgb",
                         rgb_max=rgb_max,
                         num_bins=num_bins,
-                        num_channels=num_channels
+                        num_channels=num_channels,
                     )
                     dist_array.append(dist)
                 self.rgb_ratio_dict[key] = rgb

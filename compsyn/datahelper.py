@@ -35,7 +35,9 @@ class ImageData:
             fp = os.path.join(path, folder)
             self.log.info(f"loading from folder {fp}")
             assert os.path.isdir(fp)
-            self.load_image_dict_from_folder(fp, label=label, compute_jazabz=compute_jzazbz)
+            self.load_image_dict_from_folder(
+                fp, label=label, compute_jazabz=compute_jzazbz
+            )
         self.labels_list = list(self.rgb_dict.keys())
 
     def load_image_dict_from_folder(self, path, label=None, compute_jzazbz=True):
@@ -129,7 +131,9 @@ class ImageData:
                     rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
                 ]
             except ColorSpaceConversionError as exc:
-                raise ColorSpaceConversionError(f"While converting {labels} to jzazbz colorspace")
+                raise ColorSpaceConversionError(
+                    f"While converting {labels} to jzazbz colorspace"
+                )
 
     def print_labels(self):
         self.labels_list = list(self.rgb_dict.keys())
