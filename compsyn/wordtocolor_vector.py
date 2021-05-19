@@ -147,9 +147,15 @@ class WordToColorVector(Vector):
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
 
-        self.jzazbz_wavelet_embedding = get_wavelet_embedding(im=self.colorgram, mode="JzAzBz")
-        self.rgb_wavelet_embedding = get_wavelet_embedding(im=self.colorgram, mode="RGB")
-        self.grey_wavelet_embedding = get_wavelet_embedding(im=self.colorgram, mode="Grey")
+        self.jzazbz_wavelet_embedding = get_wavelet_embedding(
+            im=self.colorgram, mode="JzAzBz"
+        )
+        self.rgb_wavelet_embedding = get_wavelet_embedding(
+            im=self.colorgram, mode="RGB"
+        )
+        self.grey_wavelet_embedding = get_wavelet_embedding(
+            im=self.colorgram, mode="Grey"
+        )
 
     def run(self, **kwargs) -> None:
 
