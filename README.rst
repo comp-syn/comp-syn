@@ -35,7 +35,7 @@ Run ``python setup.py install`` for default installation.
 
 Run ``pip install .`` to install from source.
 
-With `poetry <https://python-poetry.org/>_`:
+With `poetry <https://python-poetry.org/>`__:
 
 Run ``poetry install``
 

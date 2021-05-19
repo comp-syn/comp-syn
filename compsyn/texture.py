@@ -4,11 +4,8 @@ from PIL import Image
 from kymatio import Scattering2D
 import torch
 
-L = 4
-J = 5
 
-
-def perform_scattering_transform(im):
+def perform_scattering_transform(im, L=4, J=5):
     """Performs scattering transform on single channel  image array
 	In: im (numpy ndarray (128x128))
 	Out: scattering coefficient (list)"""
