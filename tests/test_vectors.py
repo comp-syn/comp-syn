@@ -19,11 +19,11 @@ def validate_w2cv(
     rel: float = 1e-6,
 ) -> None:
     for i, v in enumerate(expected_rgb_dist):
-        assert v == approx(w2cv.rgb_dist[i], rel=rel, abs=1e-12)
+        assert v == approx(w2cv.rgb_dist[i], rel=rel, abs=1e-10)
     for i, v in enumerate(expected_jzazbz_dist):
-        assert v == approx(w2cv.jzazbz_dist[i], rel=rel, abs=1e-12)
+        assert v == approx(w2cv.jzazbz_dist[i], rel=rel, abs=1e-10)
     for i, v in enumerate(expected_rgb_ratio):
-        assert v == approx(w2cv.rgb_ratio[i], rel=rel, abs=1e-12)
+        assert v == approx(w2cv.rgb_ratio[i], rel=rel, abs=1e-10)
 
 
 @pytest.mark.integration

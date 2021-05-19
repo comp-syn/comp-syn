@@ -9,8 +9,8 @@ import numpy as np
 from PIL import Image
 from numba import jit
 
+from .color import rgb_array_to_jzazbz_array, ColorSpaceConversionError
 from .logger import get_logger
-from color import rgb_array_to_jzazbz_array
 
 
 class ImageLoadingError(Exception):
@@ -35,8 +35,7 @@ class ImageData:
             fp = os.path.join(path, folder)
             self.log.info(f"loading from folder {fp}")
             assert os.path.isdir(fp)
-            self.load_image_dict_from_folder(fp, label=label)
-            self.store_jzazbz_from_rgb(label)
+            self.load_image_dict_from_folder(fp, label=label, compute_jazabz=compute_jzazbz)
         self.labels_list = list(self.rgb_dict.keys())
 
     def load_image_dict_from_folder(self, path, label=None, compute_jzazbz=True):
@@ -125,9 +124,12 @@ class ImageData:
             labels = list(self.rgb_dict.keys())
         self.log.debug(f"creating jzazbz arrays from rgb arrays for {labels}")
         for label in labels:
-            self.jzazbz_dict[label] = [
-                rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
-            ]
+            try:
+                self.jzazbz_dict[label] = [
+                    rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
+                ]
+            except ColorSpaceConversionError as exc:
+                raise ColorSpaceConversionError(f"While converting {labels} to jzazbz colorspace")
 
     def print_labels(self):
         self.labels_list = list(self.rgb_dict.keys())

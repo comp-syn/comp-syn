@@ -9,8 +9,8 @@ import numpy as np
 import scipy.stats
 import matplotlib.colors as mplcolors
 from numba import jit
-from color import *
 
+from .color import kl_divergence, js_divergence, color_distribution, avg_rgb, avg_hsv
 from .logger import get_logger
 from .datahelper import ImageData
 
@@ -73,18 +73,26 @@ class ImageAnalysis:
             for key in labels:
                 if key not in self.image_data.labels_list:
                     self.log.warning(f"label {key} does not exist")
-                    continue
                 if key not in self.image_data.jzazbz_dict.keys():
                     self.image_data.store_jzazbz_from_rgb(key)
-                jzazbz, dist_array = [], []
-                imageset = self.jzazbz_dict[key]
-                for i in range(len(imageset)):
-                    jzazbz.append(imageset[i])
-                    dist = color_distribution(imageset[i],"jzazbz")
-                    if True in np.isnan(dist):
+                dist_array = list()
+                for img_rgb in self.rgb_dict[key]:
+                    jzazbz_dist = color_distribution(
+                        img_rgb=img_rgb, 
+                        colorspace="jzazbz", 
+                        num_bins=num_bins,
+                        Jz_min=Jz_min,
+                        Jz_max=Jz_max,
+                        Az_min=Az_min,
+                        Az_max=Az_max,
+                        Bz_min=Bz_min,
+                        Bz_max=Bz_max,
+                        num_channels=num_channels
+                    )
+                    if True in np.isnan(jzazbz_dist):
                         # Drop any dists that contain NaN
-                        continue
-                    dist_array.append(dist)
+                        self.log.warning(f"Dropping jzazbz_dist with NaN for {key}")
+                    dist_array.append(jzazbz_dist)
                 self.jzazbz_dist_dict[key] = dist_array
 
         if "hsv" in color_rep:
@@ -93,13 +101,17 @@ class ImageAnalysis:
             for key in labels:
                 if key not in self.image_data.labels_list:
                     self.log.warning(f"label {key} does not exist")
-                    continue
-                imageset = self.rgb_ratio_dict[key]
-                dist_array, h, s, v = [], [], [], []
-                for i in range(len(imageset)):
-                    dist = color_distribution(imageset[i],"hsv")
+                dist_array, h, s, v = list(), list(), list(), list()
+                for img_rgb in self.rgb_dict[key]:
+                    dist = color_distribution(
+                        img_rgb=img_rgb, 
+                        colorspace="hsv",
+                        rgb_max=rgb_max,
+                        spacing=spacing,
+                        h_max=h_max
+                    )
                     dist_array.append(dist)
-                    h_temp, s_temp, v_temp = avg_hsv(imageset[i])
+                    h_temp, s_temp, v_temp = avg_hsv(hsv_img)
                     h.append(h_temp)
                     s.append(s_temp)
                     v.append(v_temp)
@@ -112,17 +124,21 @@ class ImageAnalysis:
                 if key not in self.image_data.labels_list:
                     self.log.warning(f"label {key} does not exist")
                     continue
-                imageset = self.rgb_dict[key]
-                rgb = []
-                dist_array = []
-                for i in range(len(imageset)):
-                    rgb_temp = avg_rgb(imageset[i])
+                rgb = list() 
+                dist_array = list() 
+                for i, img_rgb in enumerate(self.rgb_dict[key]):
                     try:
-                        rgb.append(rgb_temp)
+                        rgb.append(avg_rgb(img_rgb))
                     except RuntimeWarning as exc:
-                        self.log.warning(f"{exc}, skipping image {i}/{len(imageset)}")
+                        self.log.warning(f"{exc}, skipping image {i}/{len(self.rgb_dict[key])}")
                         continue
-                    dist = color_distribution(imageset[i],"rgb")
+                    dist = color_distribution(
+                        img_rgb=img_rgb,
+                        colorspace="rgb",
+                        rgb_max=rgb_max,
+                        num_bins=num_bins,
+                        num_channels=num_channels
+                    )
                     dist_array.append(dist)
                 self.rgb_ratio_dict[key] = rgb
                 self.rgb_dist_dict[key] = dist_array
