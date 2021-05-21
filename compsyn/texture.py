@@ -24,10 +24,9 @@ def get_coefficents(L, J):
 	return np.array(index), np.array(jj1), np.array(jj2), np.array(ll1), np.array(ll2)
 
 def perform_scattering_transform(im, L=4, J=5):
-    """Performs scattering transform on single channel  image array
+	"""Performs scattering transform on single channel  image array
 	In: im (numpy ndarray (128x128))
 	Out: scattering coefficient (list)"""
-
 	scattering = Scattering2D(J=J, shape=im.shape, L=L, max_order=2)
 	img_tensor = torch.tensor(im.astype(np.float32) / 255.)
 	scattering_coefficients = scattering(img_tensor)
@@ -37,11 +36,11 @@ def perform_scattering_transform(im, L=4, J=5):
 	sc.append(scattering_coefficients[0])
 	sc1 = scattering_coefficients[1:J*L+1]
 	sc2 =  scattering_coefficients[J*L+1:]
-	coeffs, j1, j2, l1, l2 = get_coefficents(L, J)
+	index, j1, j2, l1, l2 = get_coefficents(L, J)
 	a = []
 	b = []
 	c = []
- 	sc_temp = []
+	sc_temp = []
 	for i in range(int(len(sc1)/L)):
 		sc.append(np.mean(sc1[L*i:L*(i+1)]))
 	for i in range(int(len(sc2)/L)):
@@ -60,23 +59,7 @@ def perform_scattering_transform(im, L=4, J=5):
 			mask = mask1&mask2
 			if(len(sc_temp[mask])>0):
 				sc.append(np.mean(sc_temp[mask]))
-	return sc 
-    scattering = Scattering2D(J=J, shape=im.shape, L=L, max_order=2)
-    img_tensor = torch.tensor(im.astype(np.float32) / 255.0)
-    scattering_coefficients = scattering(img_tensor)
-    scattering_coefficients = np.array(scattering_coefficients)
-    sc = []
-    scattering_coefficients = (
-        np.sum(scattering_coefficients, axis=(1, 2)) / scattering_coefficients.shape[1]
-    )
-    sc.append(scattering_coefficients[0])
-    sc1 = scattering_coefficients[1 : J * L + 1]
-    sc2 = scattering_coefficients[J * L + 1 :]
-    for i in range(int(len(sc1) / L)):
-        sc.append(np.mean(sc1[L * i : L * (i + 1)]))
-    for i in range(int(len(sc2) / L)):
-        sc.append(np.mean(sc2[L * i : L * (i + 1)]))
-    return sc
+	return sc
 
 def get_wavelet_embedding(im, mode="JzAzBz"):
     """Generates wavelet image embedding 
