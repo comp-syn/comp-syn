@@ -3,9 +3,11 @@ comp-syn
 
 comp-syn is a python package which provides a novel methodology to explore relationships between abstract concepts and color. We provide functionalities to create a dataset for word - image associations through Google Cloud and WordNet, as and demonstrate a variety of image and word related analyses. We introduce constructs such as *Colorgrams* as a tool for analysis, as well as the ability to create *color representational vectors* for images, and words as aggregations of images. Our work demonstrates a strong relationship between abstract semantic domains and colors, and supports claims for collective cognition and embodied cognition. The package allows you to explore these relationships yourself!
 
-The theoretical frameword is described in:
+The theoretical frameword is described in these papers:
 
-Douglas Guilbeault , Ethan Nadler, Mark Chu, Ruggiero Lo Sardo, Aabir Abubaker Kar, and Bhargav Srinivasa Desikan. "Color Associations in Abstract Semantic Domains." *Forthcoming in Cognition* (2020).
+Bhargav Srinivasa Desikan, Tasker Hull, Ethan O Nadler, Douglas Guilbeault, Aabir Abubaker Kar, Mark Chu, Donald Ruggiero Lo Sardo. **comp-syn: Perceptually Grounded Word Embeddings with Color**, *Proceedings of the 28th International Conference on Computational Linguistics (COLING'20)* `link to paper <https://arxiv.org/abs/2010.04292>`__
+
+Douglas Guilbeault , Ethan Nadler, Mark Chu, Ruggiero Lo Sardo, Aabir Abubaker Kar, and Bhargav Srinivasa Desikan. **Color Associations in Abstract Semantic Domains.** *Cognition* (2020). `link to paper <https://www.sciencedirect.com/science/article/abs/pii/S0010027720301256>`__
 
 The work arose through a collaboration between the contributors at the Santa Fe Institute's Complex System Summer School 2019. 
 
@@ -33,7 +35,7 @@ Run ``python setup.py install`` for default installation.
 
 Run ``pip install .`` to install from source.
 
-With `poetry <https://python-poetry.org/>_`:
+With `poetry <https://python-poetry.org/>`__:
 
 Run ``poetry install``
 

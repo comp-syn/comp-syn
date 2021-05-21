@@ -9,37 +9,12 @@ import numpy as np
 from PIL import Image
 from numba import jit
 
+from .color import rgb_array_to_jzazbz_array, ColorSpaceConversionError
 from .logger import get_logger
 
 
 class ImageLoadingError(Exception):
     pass
-
-
-def rgb_array_to_jzazbz_array(rgb_array: np.ndarray) -> np.ndarray:
-    """
-    Converts rgb pixel values to JzAzBz pixel values
-    ​
-    Args:
-        rgb_array (array): matrix of rgb pixel values
-    ​
-    Returns:
-        jzazbz_array (array): matrix of JzAzBz pixel values
-    """
-
-    r = rgb_array[:, :, 0].reshape([-1])
-    g = rgb_array[:, :, 1].reshape([-1])
-    b = rgb_array[:, :, 2].reshape([-1])
-    try:
-        from .jzazbz import JZAZBZ_ARRAY_NPY
-    except ImportError as exc:
-        raise ImportError(
-            f"This usually means that no jzazbz_array.npy file could be found at {os.getenv('COMPSYN_JZAZBZ_ARRAY')}"
-        ) from exc
-
-    jzazbz_vals = JZAZBZ_ARRAY_NPY[r, g, b]
-    jzazbz_array = jzazbz_vals.reshape(list(rgb_array.shape[:3])).transpose([0, 1, 2])
-    return jzazbz_array
 
 
 class ImageData:
@@ -60,8 +35,9 @@ class ImageData:
             fp = os.path.join(path, folder)
             self.log.info(f"loading from folder {fp}")
             assert os.path.isdir(fp)
-            self.load_image_dict_from_folder(fp, label=label)
-            self.store_jzazbz_from_rgb(label)
+            self.load_image_dict_from_folder(
+                fp, label=label, compute_jazabz=compute_jzazbz
+            )
         self.labels_list = list(self.rgb_dict.keys())
 
     def load_image_dict_from_folder(self, path, label=None, compute_jzazbz=True):
@@ -150,9 +126,14 @@ class ImageData:
             labels = list(self.rgb_dict.keys())
         self.log.debug(f"creating jzazbz arrays from rgb arrays for {labels}")
         for label in labels:
-            self.jzazbz_dict[label] = [
-                rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
-            ]
+            try:
+                self.jzazbz_dict[label] = [
+                    rgb_array_to_jzazbz_array(rgb) for rgb in self.rgb_dict[label]
+                ]
+            except ColorSpaceConversionError as exc:
+                raise ColorSpaceConversionError(
+                    f"While converting {labels} to jzazbz colorspace"
+                )
 
     def print_labels(self):
         self.labels_list = list(self.rgb_dict.keys())
