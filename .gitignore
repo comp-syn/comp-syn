@@ -15,3 +15,4 @@ no-experiment-name
 shared-env
 .coverage*
 build/
+tests/test-assets/default-experiment/

@@ -39,6 +39,9 @@ class Visualisation:
         self.labels_list = self.image_analysis.labels_list
         self.rgb_ratio_dict = self.image_analysis.rgb_ratio_dict
         self.log = get_logger(self.__class__.__name__)
+        self.figures_dir = Path(os.getenv("COMPSYN_WORK_DIR")).joinpath("figures")
+        if not self.figures_dir.is_dir():
+            self.figures_dir.mkdir(exist_ok=True, parents=True)
 
     def jzazbz_color_distribution(self, label, num_channels=3):
         """
@@ -93,10 +96,9 @@ class Visualisation:
             y=1.045,
         )
 
-        if not os.path.isdir("Figures/"):
-            os.mkdir("Figures/")
-        plt.savefig("Figures/" + label + "_full_dist.png")
-        plt.show()
+        figure_path = self.figures_dir.joinpath(f"{label}_full_dist.png")
+        plt.savefig(str(figure_path))
+        self.log.info(f"saved figure {figure_path}")
 
     def plot_labels_in_space(self, n_clusters=2):
         """
@@ -179,10 +181,9 @@ class Visualisation:
             loc=1, bbox_to_anchor=(1.845, 0.825), ncol=2, frameon=False, fontsize=14.5
         )
 
-        if not os.path.isdir("Figures/"):
-            os.mkdir("Figures/")
-        plt.savefig("Figures/" + semantic_domain + ".png")
-        plt.show()
+        figure_path = self.figures_dir.joinpath(f"{semantic_domain}.png")
+        plt.savefig(str(figure_path))
+        self.log.info(f"saved figure {figure_path}")
 
     def cluster_analysis(self, plot_colorbar=True):
         """
@@ -265,10 +266,9 @@ class Visualisation:
             )
 
         semantic_domain = "test"
-        if not os.path.isdir("Figures/"):
-            os.mkdir("Figures/")
-        plt.savefig("Figures/" + semantic_domain + "dendrogram.png")
-        plt.show()
+        figure_path = self.figures_dir.joinpath(f"{semantic_domain}_dendrogram.png")
+        plt.savefig(str(figure_path))
+        self.log.info(f"saved figure {figure_path}")
 
     def plot_tsne(self):
         """
@@ -310,8 +310,9 @@ class Visualisation:
 
         plt.title("t-SNE (perplexity = " + str(plot_perplexity) + ")", fontsize=20)
 
-        plt.savefig("Figures/tSNE_all_colorgram.pdf")
-        plt.show()
+        figure_path = self.figures_dir.joinpath("tSNE_all_colorgram.pdf")
+        plt.savefig(str(figure_path))
+        self.log.info(f"saved figure {figure_path}")
 
     def plot_word_colors(self, word_distance=0.2, size=25, save=True):
         """

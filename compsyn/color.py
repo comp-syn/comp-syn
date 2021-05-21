@@ -199,7 +199,6 @@ def color_distribution(
             Bz_max,
             num_channels,
         )
-        get_logger("color_distribution").debug(f"jzazbz_dist computed: {jzazbz_dist}")
         return jzazbz_dist
 
     elif colorspace == "hsv":
