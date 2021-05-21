@@ -27,4 +27,4 @@ jobs:
         COMPSYN_S3_REGION_NAME: us-east-1 
         COMPSYN_S3_BUCKET: comp-syn-pytest 
       run: |
-        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest
+        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest --cov=compsyn
