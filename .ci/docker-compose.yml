@@ -3,6 +3,7 @@ services:
   comp-syn:
     build:
       context: ../
+      dockerfile: ./Dockerfile
     volumes:
       - ../:/home/admin/comp-syn
       - /Volumes/LACIE/compsyn/data/zth:/home/admin/data
