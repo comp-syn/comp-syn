@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -70,6 +71,7 @@ def test_w2cv_produce_known_analysis_results():
 
 @pytest.mark.online
 def test_w2cv_fresh_run():
+    start = time.time()
     w2cv = WordToColorVector(label="dog", revision="raw-test")
     w2cv.run_image_capture()
     w2cv.run_analysis()
@@ -83,6 +85,7 @@ def test_w2cv_fresh_run():
     DOG_RGB_RATIO = w2cv.rgb_ratio
 
     w2cv.save()
+    print("full run completed in", round(time.time() - start, 2), "seconds")
 
 
 @pytest.mark.online
