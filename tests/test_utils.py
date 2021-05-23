@@ -39,6 +39,8 @@ def test_compress_image() -> None:
     plt.ylim([0, 1])
 
     plt.savefig(profile_plot_path)
+    plt.clf()
+    plt.close()
 
     assert sum(y) / len(y) < 0.5
 

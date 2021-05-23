@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  comp-syn:
+    build:
+      context: ../
+    volumes:
+      - ../:/home/admin/comp-syn
+      - /Volumes/LACIE/compsyn/data/zth:/home/admin/data
+    environment:
+      - COMPSYN_WORK_DIR=/home/admin/data
+      - COMPSYN_JZAZBZ_ARRAY=/home/admin/jzazbz_array.npy
+      - COMPSYN_DRIVER_BROWSER=Firefox
+      - COMPSYN_DRIVER_PATH=/usr/local/bin/geckodriver
+      - COMPSYN_HOSTNAME=docker-compose-ci 
+      - COMPSYN_S3_ACCESS_KEY_ID
+      - COMPSYN_S3_SECRET_ACCESS_KEY
+      - COMPSYN_S3_REGION_NAME
+      - COMPSYN_S3_BUCKET

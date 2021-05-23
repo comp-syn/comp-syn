@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from matplotlib import pyplot as plt
 
 from compsyn.analysis import ImageAnalysis, merge_vectors_to_image_analysis
 from compsyn.config import CompsynConfig
@@ -13,6 +14,9 @@ from compsyn.visualisation import Visualisation
 
 @pytest.mark.integration
 def test_Visualisation() -> None:
+
+    plt.clf()
+    plt.close()
 
     CompsynConfig(work_dir=Path(__file__).parent.joinpath("test-assets"),)
     trial = Trial(
@@ -36,3 +40,6 @@ def test_Visualisation() -> None:
     visualization.plot_labels_in_space()
 
     # TODO: validate resulting ImageAnalysis object more
+
+    plt.clf()
+    plt.close()

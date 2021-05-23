@@ -1,0 +1,30 @@
+name: Test
+on:
+  pull_request:
+  push: { branches: master }
+
+jobs:
+  test:
+    environment: ci
+    name: Run test suite
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_FILE: .ci/docker-compose.yml
+      COMPSYN_S3_ACCESS_KEY_ID: ${{ secrets.COMPSYN_S3_ACCESS_KEY_ID }}
+      COMPSYN_S3_SECRET_ACCESS_KEY: ${{ secrets.COMPSYN_S3_SECRET_ACCESS_KEY }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build docker images
+      run: docker-compose build
+
+    - name: Run full pytest coverage 
+      env:
+        COMPSYN_S3_ACCESS_KEY_ID: ${{ secrets.COMPSYN_S3_ACCESS_KEY_ID }}
+        COMPSYN_S3_SECRET_ACCESS_KEY: ${{ secrets.COMPSYN_S3_SECRET_ACCESS_KEY }}
+        COMPSYN_S3_REGION_NAME: us-east-1 
+        COMPSYN_S3_BUCKET: comp-syn-pytest 
+      run: |
+        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest --cov=compsyn -s
