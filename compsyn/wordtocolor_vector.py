@@ -136,11 +136,13 @@ class WordToColorVector(Vector):
         )
         self.jzazbz_composite_dists = self.image_analysis.jzazbz_dist_dict[self.label]
         self.jzazbz_dist = np.mean(self.jzazbz_composite_dists, axis=0)
-
         self.jzazbz_dist_std = np.std(self.jzazbz_composite_dists, axis=0)
 
         self.rgb_vector = np.mean(self.image_analysis.rgb_dict[self.label], axis=0)
-        self.rgb_dist = np.mean(self.image_analysis.rgb_dist_dict[self.label], axis=0)
+        self.rgb_composite_dists = self.image_analysis.rgb_dist_dict[self.label]
+        self.rgb_dist = np.mean(self.rgb_composite_dists, axis=0)
+        self.rgb_dist_std = np.std(self.rgb_composite_dists, axis=0)
+
         self.rgb_ratio = np.mean(self.image_analysis.rgb_ratio_dict[self.label], axis=0)
 
         self.colorgram_vector = self.image_analysis.compressed_img_dict[self.label]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+import warnings
 
 import numpy as np
 from PIL import Image
@@ -82,32 +83,35 @@ def get_wavelet_embedding(im: Image, mode: str = "JzAzBz") -> np.ndarray:
 	Out: 
 	    wavelet vector (numpy ndarray)"""
 
-    log = get_logger("get_wavelet_embedding")
-    log.debug("resizing image to 128x128")
-    im = im.resize((128, 128))
+    with warnings.catch_warnings():  # kymatio / torch is raising deprecation warnings
+        warnings.filterwarnings("ignore", category=UserWarning)
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        log = get_logger("get_wavelet_embedding")
+        log.debug("resizing image to 128x128")
+        im = im.resize((128, 128))
 
-    start_time = time.time()
-    sc = list()
-    if mode.lower() == "grey":
-        im = im.convert("L")
-        im = np.array(im)
-        sc = perform_scattering_transform(im)
-    elif mode.lower() == "jzazbz":
-        im = np.array(im)[:, :, :3]
-        im = rgb_array_to_jzazbz_array(im)
-        for channel in [0, 1, 2]:
-            im_channel = im[:, :, channel]
-            sc.extend(perform_scattering_transform(im_channel))
-    elif mode.upper() == "RGB":
+        start_time = time.time()
         sc = list()
-        im = np.array(im)[:, :, :3]
-        for channel in [0, 1, 2]:
-            im_channel = im[:, :, channel]
-            sc.extend(perform_scattering_transform(im_channel))
-    else:
-        raise ValueError(f"unknown mode '{mode}'")
+        if mode.lower() == "grey":
+            im = im.convert("L")
+            im = np.array(im)
+            sc = perform_scattering_transform(im)
+        elif mode.lower() == "jzazbz":
+            im = np.array(im)[:, :, :3]
+            im = rgb_array_to_jzazbz_array(im)
+            for channel in [0, 1, 2]:
+                im_channel = im[:, :, channel]
+                sc.extend(perform_scattering_transform(im_channel))
+        elif mode.upper() == "RGB":
+            sc = list()
+            im = np.array(im)[:, :, :3]
+            for channel in [0, 1, 2]:
+                im_channel = im[:, :, channel]
+                sc.extend(perform_scattering_transform(im_channel))
+        else:
+            raise ValueError(f"unknown mode '{mode}'")
 
-    log.info(
-        f"computed {mode} wavelet embedding in {round(time.time() - start_time, 2)} seconds"
-    )
-    return np.array(sc)
+        log.debug(
+            f"computed {mode} wavelet embedding in {round(time.time() - start_time, 2)} seconds"
+        )
+        return np.array(sc)

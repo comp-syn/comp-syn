@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 import os
 import random
+import tempfile
+from pathlib import Path
 
 import PIL
 import numpy as np
@@ -76,22 +78,32 @@ class ImageAnalysis:
                 if key not in self.image_data.jzazbz_dict.keys():
                     self.image_data.store_jzazbz_from_rgb(key)
                 dist_array = list()
-                for img_rgb in self.rgb_dict[key]:
-                    jzazbz_dist = color_distribution(
-                        img_rgb=img_rgb,
-                        colorspace="jzazbz",
-                        num_bins=num_bins,
-                        Jz_min=Jz_min,
-                        Jz_max=Jz_max,
-                        Az_min=Az_min,
-                        Az_max=Az_max,
-                        Bz_min=Bz_min,
-                        Bz_max=Bz_max,
-                        num_channels=num_channels,
-                    )
+                for i, img_rgb in enumerate(self.rgb_dict[key]):
+                    try:
+                        jzazbz_dist = color_distribution(
+                            img_rgb=img_rgb,
+                            colorspace="jzazbz",
+                            num_bins=num_bins,
+                            Jz_min=Jz_min,
+                            Jz_max=Jz_max,
+                            Az_min=Az_min,
+                            Az_max=Az_max,
+                            Bz_min=Bz_min,
+                            Bz_max=Bz_max,
+                            num_channels=num_channels,
+                        )
+                    except RuntimeWarning as exc:
+                        failed_image_path = Path(tempfile.NamedTemporaryFile().name)
+                        PIL.Image.fromarray(img_rgb, "RGB").save(
+                            str(failed_image_path), "png"
+                        )
+                        self.log.warning(
+                            f"{exc}, could not compute jzazbz color distribution for image saved to {failed_image_path}, skipping image {i}/{len(self.rgb_dict[key])}"
+                        )
+                        continue
                     if True in np.isnan(jzazbz_dist):
-                        # Drop any dists that contain NaN
                         self.log.warning(f"Dropping jzazbz_dist with NaN for {key}")
+                        continue
                     dist_array.append(jzazbz_dist)
                 self.jzazbz_dist_dict[key] = dist_array
 
@@ -130,17 +142,30 @@ class ImageAnalysis:
                     try:
                         rgb.append(avg_rgb(img_rgb))
                     except RuntimeWarning as exc:
+                        failed_image_path = Path(tempfile.NamedTemporaryFile().name)
+                        PIL.Image.fromarray(img_rgb, "RGB").save(
+                            str(failed_image_path), "png"
+                        )
                         self.log.warning(
-                            f"{exc}, skipping image {i}/{len(self.rgb_dict[key])}"
+                            f"{exc}, could not compute rgb average for image saved to {failed_image_path}, skipping image {i}/{len(self.rgb_dict[key])}"
+                        )
+                    try:
+                        dist = color_distribution(
+                            img_rgb=img_rgb,
+                            colorspace="rgb",
+                            rgb_max=rgb_max,
+                            num_bins=num_bins,
+                            num_channels=num_channels,
+                        )
+                    except RuntimeWarning as exc:
+                        failed_image_path = Path(tempfile.NamedTemporaryFile().name)
+                        PIL.Image.fromarray(img_rgb, "RGB").save(
+                            str(failed_image_path), "png"
+                        )
+                        self.log.warning(
+                            f"{exc}, could not compute rgb color distribution for image saved to {failed_image_path}, skipping image {i}/{len(self.rgb_dict[key])}"
                         )
                         continue
-                    dist = color_distribution(
-                        img_rgb=img_rgb,
-                        colorspace="rgb",
-                        rgb_max=rgb_max,
-                        num_bins=num_bins,
-                        num_channels=num_channels,
-                    )
                     dist_array.append(dist)
                 self.rgb_ratio_dict[key] = rgb
                 self.rgb_dist_dict[key] = dist_array
