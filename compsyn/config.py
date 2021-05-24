@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from .logger import get_logger
-from .helperfunctions import get_browser_args, get_google_application_args
+from .helperfunctions import get_google_application_args
 from .s3 import get_s3_args
 from .jzazbz import get_jzazbz_args
 from .utils import set_env_var, get_logger_args, env_default
@@ -77,7 +77,6 @@ class CompsynConfig:
 
         get_jzazbz_args(parser)
         get_google_application_args(parser)
-        get_browser_args(parser)
         get_s3_args(parser)
         get_logger_args(parser)
 
