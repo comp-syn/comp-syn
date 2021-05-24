@@ -104,7 +104,7 @@ class Vector:
         return (
             Path(f"{self.trial.experiment_name}/vectors")
             .joinpath(self.revision)
-            .joinpath(self.label)
+            .joinpath(self.label.replace(" ", "_"))
             .joinpath("w2cv.pickle")
         )
 
