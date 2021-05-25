@@ -88,7 +88,7 @@ def test_w2cv_fresh_run():
     print("full run completed in", round(time.time() - start, 2), "seconds")
 
 
-@pytest.mark.online
+@pytest.mark.credentials
 @pytest.mark.depends(on=["test_w2cv_fresh_run"])
 def test_w2cv_s3_push():
     w2cv = WordToColorVector(label="dog", revision="raw-test")
@@ -102,7 +102,7 @@ def test_w2cv_s3_push():
     w2cv.push(include_raw_images=True, overwrite=True)
 
 
-@pytest.mark.online
+@pytest.mark.credentials
 @pytest.mark.depends(on=["test_w2cv_fresh_run", "test_w2cv_s3_push"])
 def test_w2cv_s3_pull():
     w2cv = WordToColorVector(label="dog", revision="raw-test")
