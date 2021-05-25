@@ -9,6 +9,6 @@ RUN /home/admin/.poetry/bin/poetry config virtualenvs.create false
 RUN cd /home/admin/comp-syn && /home/admin/.poetry/bin/poetry install
 
 ADD compsyn /home/admin/comp-syn/
-RUN /home/admin/.poetry/bin/poetry install
+RUN cd /home/admin/comp-syn && /home/admin/.poetry/bin/poetry install
 
 WORKDIR /home/admin/comp-syn
