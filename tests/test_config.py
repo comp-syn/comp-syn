@@ -33,6 +33,8 @@ def test_CompsynConfig() -> None:
         experiment_name="test-patterns", trial_id="phase-1", hostname="pytester",
     )
 
+    print(config)
+
     assert trial.experiment_name == "test-patterns"
     assert trial.trial_id == "phase-0"
     assert trial.hostname == "pytester"

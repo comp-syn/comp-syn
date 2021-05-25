@@ -12,12 +12,12 @@ from multiprocessing.pool import ThreadPool
 import PIL
 import numpy as np
 import matplotlib.pyplot as plt
+import qloader
 
 from .config import CompsynConfig
 from .datahelper import ImageData, rgb_array_to_jzazbz_array
 from .analysis import ImageAnalysis
 from .vector import Vector
-from .helperfunctions import get_browser_args, search_and_download
 from .logger import get_logger
 from .s3 import upload_file_to_s3, download_file_from_s3, list_object_paths_in_s3
 from .utils import compress_image
@@ -36,6 +36,11 @@ class WordToColorVector(Vector):
         )
         self.raw_image_urls = None
         self.log.debug(f"local downloads: {self._local_raw_images_path}")
+
+        if "language" not in self.metadata:
+            self.metadata["language"] = "en"
+        if "browser" not in self.metadata:
+            self.metadata["browser"] = CompsynConfig().config["browser"]
 
     def __repr__(self) -> str:
         """ Nice looking representation """
@@ -70,7 +75,7 @@ class WordToColorVector(Vector):
     def raw_images_path(self) -> Path:
         return (
             Path(f"{self.trial.experiment_name}/raw-images")
-            .joinpath(self.label)
+            .joinpath(self.label.replace(" ", "_"))
             .joinpath(self.trial.trial_id)
             .joinpath(self.trial.hostname)
             .joinpath(self.trial.trial_timestamp)
@@ -80,7 +85,7 @@ class WordToColorVector(Vector):
         for img_path in self._local_raw_images_path.iterdir():
             img_path.unlink()
 
-    def run_image_capture(self, driver_options: Optional[List[str]] = None,) -> None:
+    def run_image_capture(self) -> None:
         """ Gather images from Google Images sets the attribute `self.raw_image_urls`"""
 
         # check if there are already raw images available already
@@ -98,18 +103,14 @@ class WordToColorVector(Vector):
                 )
             return
 
-        if driver_options is None:
-            driver_options = ["--headless"]
-
-        browser_args, unknown = get_browser_args().parse_known_args()
-
-        self.raw_image_urls = search_and_download(
-            search_term=self.label,
-            driver_browser=browser_args.driver_browser,
-            driver_executable_path=browser_args.driver_path,
-            driver_options=driver_options,
-            target_path=self._local_raw_images_path,
-            number_images=100,
+        self.raw_images_metadata = qloader.run(
+            endpoint="google-images",
+            query_terms=self.label,
+            output_path=self._local_raw_images_path,
+            max_items=100,
+            metadata=self.metadata,
+            language=self.metadata["language"],
+            browser=self.metadata["browser"],
         )
 
     def load_data(self, **kwargs) -> None:
@@ -160,15 +161,7 @@ class WordToColorVector(Vector):
         )
 
     def run(self, **kwargs) -> None:
-
-        fresh_start = not self._local_raw_images_available
-
         self.run_image_capture()
-        if self.raw_image_urls is None:
-            self.load()
-        elif fresh_start:
-            self.save()
-
         self.run_analysis()
 
     def print_word_color(self, size: int = 30, color_magnitude: float = 1.65) -> None:
@@ -193,6 +186,7 @@ class WordToColorVector(Vector):
             "jzazbz_vector",
             "rgb_vector",
             "colorgram_vector",
+            "raw_images_metadata",
         ]:
             if hasattr(to_be_saved, del_attr):
                 delattr(to_be_saved, del_attr)
@@ -220,16 +214,10 @@ class WordToColorVector(Vector):
         super().push(**kwargs)
         if include_raw_images:
             # push raw images
-            self.log.info(f"pushing raw images (ovewrite={overwrite})...")
+            self.log.debug(f"pushing raw images (ovewrite={overwrite})...")
             local_paths = list(self._local_raw_images_path.iterdir())
             start = time.time()
             func = partial(self._threaded_compressed_s3_upload, overwrite=overwrite)
-            # Performance on 12 core machine:
-            # 1 process     = 96 seconds
-            # 4 processes   = 30 seconds
-            # 5 processes   = 26 seconds
-            # 10 processes  = 21 seconds
-            # 100 processes = 19 seconds
             with ThreadPool(processes=os.getenv("COMPSYN_THREAD_POOL_SIZE", 4)) as pool:
                 pool.map(func, local_paths)
             self.log.info(
@@ -249,7 +237,7 @@ class WordToColorVector(Vector):
         super().pull(**kwargs)
         if include_raw_images:
             # pull raw images
-            self.log.info(f"pulling raw images (ovewrite={overwrite})...")
+            self.log.debug(f"pulling raw images (ovewrite={overwrite})...")
             s3_paths = list(list_object_paths_in_s3(s3_prefix=self.raw_images_path))
             start = time.time()
             func = partial(self._threaded_s3_download, overwrite=overwrite)
