@@ -3,6 +3,7 @@ services:
   comp-syn:
     build:
       context: ../
+    shm_size: '2gb'
     volumes:
       - ../:/home/admin/comp-syn
       - /Volumes/LACIE/compsyn/data/zth:/home/admin/data

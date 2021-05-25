@@ -40,7 +40,7 @@ class WordToColorVector(Vector):
         if "language" not in self.metadata:
             self.metadata["language"] = "en"
         if "browser" not in self.metadata:
-            self.metadata["browser"] = os.getenv("COMPSYN_BROWSWER", "Chrome")
+            self.metadata["browser"] = CompsynConfig().config["browser"]
 
     def __repr__(self) -> str:
         """ Nice looking representation """
@@ -214,7 +214,7 @@ class WordToColorVector(Vector):
         super().push(**kwargs)
         if include_raw_images:
             # push raw images
-            self.log.info(f"pushing raw images (ovewrite={overwrite})...")
+            self.log.debug(f"pushing raw images (ovewrite={overwrite})...")
             local_paths = list(self._local_raw_images_path.iterdir())
             start = time.time()
             func = partial(self._threaded_compressed_s3_upload, overwrite=overwrite)
@@ -237,7 +237,7 @@ class WordToColorVector(Vector):
         super().pull(**kwargs)
         if include_raw_images:
             # pull raw images
-            self.log.info(f"pulling raw images (ovewrite={overwrite})...")
+            self.log.debug(f"pulling raw images (ovewrite={overwrite})...")
             s3_paths = list(list_object_paths_in_s3(s3_prefix=self.raw_images_path))
             start = time.time()
             func = partial(self._threaded_s3_download, overwrite=overwrite)
