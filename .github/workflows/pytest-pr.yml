@@ -26,4 +26,4 @@ jobs:
 
     - name: Run non-credentialed pytest coverage 
       run: |
-        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest --cov=compsyn -m unit -m integration -m online -s
+        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest --cov=compsyn -m "unit or integration or online" -s
