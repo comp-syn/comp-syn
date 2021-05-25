@@ -72,7 +72,12 @@ class Vector:
             self.revision = revision
 
         #: other metadata can also be tracked by directly passing it
-        self.metadata = metadata
+        if metadata is None:
+            self.metadata = dict()
+        elif isinstance(metadata, dict):
+            self.metadata = metadata
+        else:
+            raise ValueError(f"'metadata' must be a Dict[str, Any], or None")
         #: track whether the information the vector represents is locally available as attributes
         self._attributes_available: bool = False
 

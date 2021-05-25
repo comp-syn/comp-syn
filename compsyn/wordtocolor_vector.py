@@ -37,6 +37,11 @@ class WordToColorVector(Vector):
         self.raw_image_urls = None
         self.log.debug(f"local downloads: {self._local_raw_images_path}")
 
+        if "language" not in self.metadata:
+            self.metadata["language"] = "en"
+        if "browser" not in self.metadata:
+            self.metadata["browser"] = os.getenv("COMPSYN_BROWSWER", "Chrome")
+
     def __repr__(self) -> str:
         """ Nice looking representation """
         output = super().__repr__()
@@ -101,9 +106,11 @@ class WordToColorVector(Vector):
         self.raw_images_metadata = qloader.run(
             endpoint="google-images",
             query_terms=self.label,
-            max_items=100,
             output_path=self._local_raw_images_path,
-            metadata_path=None,
+            max_items=100,
+            metadata=self.metadata,
+            language=self.metadata["language"],
+            browser=self.metadata["browser"],
         )
 
     def load_data(self, **kwargs) -> None:
@@ -211,12 +218,6 @@ class WordToColorVector(Vector):
             local_paths = list(self._local_raw_images_path.iterdir())
             start = time.time()
             func = partial(self._threaded_compressed_s3_upload, overwrite=overwrite)
-            # Performance on 12 core machine:
-            # 1 process     = 96 seconds
-            # 4 processes   = 30 seconds
-            # 5 processes   = 26 seconds
-            # 10 processes  = 21 seconds
-            # 100 processes = 19 seconds
             with ThreadPool(processes=os.getenv("COMPSYN_THREAD_POOL_SIZE", 4)) as pool:
                 pool.map(func, local_paths)
             self.log.info(

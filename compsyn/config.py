@@ -75,6 +75,14 @@ class CompsynConfig:
             help="Root working directory for storing data locally",
         )
 
+        root_parser.add_argument(
+            "--browser",
+            type=str,
+            action=env_default("COMPSYN_BROWSER"),
+            default="Chrome",
+            help="Browser to use, if required, for gathering data",
+        )
+
         get_jzazbz_args(parser)
         get_google_application_args(parser)
         get_s3_args(parser)
