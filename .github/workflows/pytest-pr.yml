@@ -1,7 +1,6 @@
-name: Test
+name: Test (on PR)
 on:
   pull_request: 
-    types: [ opened, closed ]
 
 jobs:
   test:
@@ -23,8 +22,3 @@ jobs:
     - name: Run non-credentialed pytest coverage 
       run: |
         docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest -m "unit or integration or online" -s
-
-    - name: Run credentialed pytest coverage 
-      if: github.event.pull_request.merged == true
-      run: |
-        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest -m "credentials" -s
