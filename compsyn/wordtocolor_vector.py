@@ -56,9 +56,23 @@ class WordToColorVector(Vector):
 
         try:
             rounded_rgb_values = [f"{val:.2e}" for val in self.rgb_dist.tolist()]
-            output += f"\n\t\t{'rgb_dist':16s} = {rounded_rgb_values}"
-            output += f"\n\t\t{'jzazbz_dist':16s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
-            output += f"\n\t\t{'jzazbz_dist_std':16s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
+            output += f"\n\t\t{'rgb_dist':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist.tolist()])}"
+            output += f"\n\t\t{'rgb_dist_std':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist_std.tolist()])}"
+            output += f"\n\t\t{'jzazbz_dist':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
+            output += f"\n\t\t{'jzazbz_dist_std':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
+        except AttributeError:
+            pass
+
+        try:
+            output += f"\n\t\t{'jzazbz_wavelet_embedding':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_wavelet_embedding.tolist()])}"
+        except AttributeError:
+            pass
+        try:
+            output += f"\n\t\t{'rgb_wavelet_embedding':26s} = {json.dumps([round(val, 3) for val in self.rgb_wavelet_embedding.tolist()])}"
+        except AttributeError:
+            pass
+        try:
+            output += f"\n\t\t{'grey_wavelet_embedding':26s} = {json.dumps([round(val, 3) for val in self.grey_wavelet_embedding.tolist()])}"
         except AttributeError:
             pass
 
@@ -85,13 +99,22 @@ class WordToColorVector(Vector):
         for img_path in self._local_raw_images_path.iterdir():
             img_path.unlink()
 
-    def run_image_capture(self) -> None:
+    def run_image_capture(
+        self,
+        extra_query_params: Optional[Dict[str, str]] = None,
+        overwrite: bool = False,
+    ) -> None:
         """ Gather images from Google Images sets the attribute `self.raw_image_urls`"""
 
         # check if there are already raw images available already
         try:
             raw_images_available = len(list(self._local_raw_images_path.iterdir()))
         except FileNotFoundError:
+            raw_images_available = 0
+
+        if raw_images_available > 0 and overwrite:
+            for p in self._local_raw_images_path.iterdir():
+                p.unlink()
             raw_images_available = 0
 
         # allow a small failure rate, as a small percentage of downloads will fail
@@ -111,6 +134,7 @@ class WordToColorVector(Vector):
             metadata=self.metadata,
             language=self.metadata["language"],
             browser=self.metadata["browser"],
+            extra_query_params=extra_query_params,
         )
 
     def load_data(self, **kwargs) -> None:
@@ -124,7 +148,7 @@ class WordToColorVector(Vector):
                 f"No data found to load, run an image capture with run_image_capture"
             )
 
-    def run_analysis(self, **kwargs) -> None:
+    def run_analysis(self, wavelet_modes: Optional[List[str]] = None, **kwargs) -> None:
 
         self.load_data()
 
@@ -150,19 +174,15 @@ class WordToColorVector(Vector):
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
 
-        self.jzazbz_wavelet_embedding = get_wavelet_embedding(
-            im=self.colorgram, mode="JzAzBz"
-        )
-        self.rgb_wavelet_embedding = get_wavelet_embedding(
-            im=self.colorgram, mode="RGB"
-        )
-        self.grey_wavelet_embedding = get_wavelet_embedding(
-            im=self.colorgram, mode="Grey"
-        )
+        if wavelet_modes is None:
+            wavelet_modes = ["JzAzBz", "RGB", "Grey"]
 
-    def run(self, **kwargs) -> None:
-        self.run_image_capture()
-        self.run_analysis()
+        for wavelet_mode in wavelet_modes:
+            setattr(
+                self,
+                f"{wavelet_mode.lower()}_wavelet_embedding",
+                get_wavelet_embedding(im=self.colorgram, mode=wavelet_mode),
+            )
 
     def print_word_color(self, size: int = 30, color_magnitude: float = 1.65) -> None:
 

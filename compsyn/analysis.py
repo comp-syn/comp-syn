@@ -140,7 +140,11 @@ class ImageAnalysis:
                 dist_array = list()
                 for i, img_rgb in enumerate(self.rgb_dict[key]):
                     try:
-                        rgb.append(avg_rgb(img_rgb))
+                        rgb_tuple = avg_rgb(img_rgb)
+                        if True in np.isnan(rgb_tuple):
+                            self.log.warning(f"Dropping rgb_tuple with NaN for {key}")
+                        else:
+                            rgb.append(rgb_tuple)
                     except RuntimeWarning as exc:
                         failed_image_path = Path(tempfile.NamedTemporaryFile().name)
                         PIL.Image.fromarray(img_rgb, "RGB").save(
