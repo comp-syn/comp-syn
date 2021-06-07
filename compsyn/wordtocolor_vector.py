@@ -101,6 +101,7 @@ class WordToColorVector(Vector):
 
     def run_image_capture(
         self,
+        max_items: int = 100,
         extra_query_params: Optional[Dict[str, str]] = None,
         overwrite: bool = False,
     ) -> None:
@@ -130,7 +131,7 @@ class WordToColorVector(Vector):
             endpoint="google-images",
             query_terms=self.label,
             output_path=self._local_raw_images_path,
-            max_items=100,
+            max_items=max_items,
             metadata=self.metadata,
             language=self.metadata["language"],
             browser=self.metadata["browser"],
