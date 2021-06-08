@@ -208,6 +208,9 @@ class WordToColorVector(Vector):
             "rgb_vector",
             "colorgram_vector",
             "raw_images_metadata",
+            "jzazbz_wavelet_embedding",
+            "rgb_wavelet_embedding",
+            "grey_wavelet_embedding",
         ]:
             if hasattr(to_be_saved, del_attr):
                 delattr(to_be_saved, del_attr)
@@ -258,6 +261,7 @@ class WordToColorVector(Vector):
         super().pull(**kwargs)
         if include_raw_images:
             # pull raw images
+            self._local_raw_images_path.mkdir(exist_ok=True, parents=True)
             self.log.debug(f"pulling raw images (ovewrite={overwrite})...")
             s3_paths = list(list_object_paths_in_s3(s3_prefix=self.raw_images_path))
             start = time.time()
