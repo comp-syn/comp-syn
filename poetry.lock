@@ -1152,7 +1152,7 @@ py = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qloader"
-version = "7.3.2"
+version = "8.0.0"
 description = "Gather results from some search engine"
 category = "main"
 optional = false
@@ -1465,7 +1465,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "87c36dae8b2a2041be52ee9cf6f1e749afbdb425d0ee6d559b22c4852aa19a55"
+content-hash = "1d535aa3857a56533ec737f57378a50bf22d8d3a697a7651613d8f4ec525ab3f"
 
 [metadata.files]
 appdirs = [
@@ -2319,8 +2319,8 @@ pyzmq = [
     {file = "pyzmq-22.1.0.tar.gz", hash = "sha256:7040d6dd85ea65703904d023d7f57fab793d7ffee9ba9e14f3b897f34ff2415d"},
 ]
 qloader = [
-    {file = "qloader-7.3.2-py3-none-any.whl", hash = "sha256:20a044d11b6aff84168f25157e9ec11ab08403a2b3d49bbaec3ad11eb5f0286d"},
-    {file = "qloader-7.3.2.tar.gz", hash = "sha256:2cbbba71b7a77f695f1f5ddd2aabbf97632161bd1780518c155645157b2fc7a8"},
+    {file = "qloader-8.0.0-py3-none-any.whl", hash = "sha256:6ac7e2726137a1f8e8b87589b415f0a5ba28c6552270e231acda070add0c91ae"},
+    {file = "qloader-8.0.0.tar.gz", hash = "sha256:dd9cb66f8744c4f56991d83f48ab7c6d5440638f33cfa88a201e21bc5168d34b"},
 ]
 regex = [
     {file = "regex-2021.4.4-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:619d71c59a78b84d7f18891fe914446d07edd48dc8328c8e149cbe0929b4e000"},

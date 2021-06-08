@@ -91,7 +91,7 @@ pywavelets==1.1.1; python_version >= "3.7" and python_version < "4.0"
 pywin32==301; sys_platform == "win32" and python_version >= "3.6"
 pywinpty==1.1.1; os_name == "nt" and python_version >= "3.6"
 pyzmq==22.1.0; python_full_version >= "3.6.1" and python_version >= "3.6"
-qloader==7.3.2; python_version >= "3.7" and python_version < "4.0"
+qloader==8.0.0; python_version >= "3.7" and python_version < "4.0"
 regex==2021.4.4; python_version >= "3.6"
 requests==2.25.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 rsa==4.7.2; python_version >= "3.5" and python_version < "4" and (python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.6")
