@@ -30,10 +30,6 @@ jobs:
       run: |
         poetry install
 
-    - name: Download non-code dependencies
-      run: |
-        container=$(docker run -d ialcloud/comp-syn-base:1.0.0 sleep 60) && docker cp ${container}:/home/admin/jzazbz_array.npy .
-
     - name: Run full pytest coverage 
       env:
         COMPSYN_S3_ACCESS_KEY_ID: ${{ secrets.COMPSYN_S3_ACCESS_KEY_ID }}
@@ -42,7 +38,7 @@ jobs:
         COMPSYN_S3_BUCKET: comp-syn-pytest 
         COMPSYN_BROWSER: Firefox
       run: |
-        poetry run pytest --cov=compsyn -s
+        container=$(docker run -d ialcloud/comp-syn-base:1.0.0 sleep 60) && docker cp ${container}:/home/admin/jzazbz_array.npy . && poetry run pytest --cov=compsyn -s
 
         #- name: Publish Package to PYPI
         #  env:
