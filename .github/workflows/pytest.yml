@@ -1,14 +1,13 @@
-name: Test (on push)
+name: Test
 on:
   push: 
 
 jobs:
-  test:
+  publish:
     environment: ci
-    name: Run test suite
+    name: Run pytest
     runs-on: ubuntu-latest
     env:
-      COMPOSE_FILE: .ci/docker-compose.yml
       COMPSYN_S3_ACCESS_KEY_ID: ${{ secrets.COMPSYN_S3_ACCESS_KEY_ID }}
       COMPSYN_S3_SECRET_ACCESS_KEY: ${{ secrets.COMPSYN_S3_SECRET_ACCESS_KEY }}
 
@@ -16,8 +15,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Build docker images
-      run: docker-compose build
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - uses: Gr1N/setup-poetry@v4
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+    
+    - name: Install dependencies
+      run: |
+        poetry install
+
+    - name: Download non-code dependencies
+      run: |
+        container=$(docker run -d ialcloud/comp-syn-base:1.0.0 sleep 60) && docker cp ${container}:/home/admin/jzazbz_array.npy .
 
     - name: Run full pytest coverage 
       env:
@@ -27,4 +42,10 @@ jobs:
         COMPSYN_S3_BUCKET: comp-syn-pytest 
         COMPSYN_BROWSER: Firefox
       run: |
-        docker-compose --env-file ./.ci/.env.pytest run comp-syn python3.8 -m pytest --cov=compsyn -s
+        poetry run pytest --cov=compsyn -s
+
+        #- name: Publish Package to PYPI
+        #  env:
+        #    PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        #  run: | 
+        #    poetry config pypi-token.pypi ${PYPI_API_TOKEN} && poetry publish --build
