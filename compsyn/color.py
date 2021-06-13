@@ -175,12 +175,12 @@ def color_distribution(
     """
 
     def _check_required_args(required_args: List[Any]) -> None:
-        for required in required_args:
+        for i, required in enumerate(required_args):
             try:
-                assert required is not None
+                assert required is not None, f"{i}: {required} must be set"
             except AssertionError:
                 raise MissingArgumentError(
-                    "Missing one or more required arguments for computing {colorspace} distribution"
+                    f"Missing one or more required arguments for computing {colorspace} distribution"
                 )
 
     if colorspace == "jzazbz":
