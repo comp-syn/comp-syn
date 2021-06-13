@@ -3,7 +3,7 @@ on:
   push: 
 
 jobs:
-  publish:
+  pytest:
     environment: ci
     name: Run pytest
     runs-on: ubuntu-latest

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "compsyn"
-version = "1.0.0b7"
+version = "1.0.0b2"
 description = "python package to explore the color of language"
 authors = ["comp-syn <group@comp-syn.com>"]
 
@@ -35,7 +35,7 @@ boto3 = "^1.14.4"
 numpy = "^1.19.5"
 kymatio = "^0.2.0"
 torch = "1.7.1"
-qloader = "^8.0.0"
+qloader = "^8.0.3"
 
 # pinned due to issues in jupyter notebook with upgraded versions, worth another look
 IPython = "7.13.0"
