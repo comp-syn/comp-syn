@@ -137,7 +137,7 @@ class WordToColorVector(Vector):
             language=self.metadata["language"],
             browser=self.metadata["browser"],
             extra_query_params=extra_query_params,
-            include_related=include_related
+            track_related=include_related
         )
 
     def load_data(self, **kwargs) -> None:
