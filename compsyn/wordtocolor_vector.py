@@ -103,6 +103,7 @@ class WordToColorVector(Vector):
         self,
         max_items: int = 100,
         extra_query_params: Optional[Dict[str, str]] = None,
+        include_related: bool = False
         overwrite: bool = False,
     ) -> None:
         """ Gather images from Google Images sets the attribute `self.raw_image_urls`"""
@@ -136,6 +137,7 @@ class WordToColorVector(Vector):
             language=self.metadata["language"],
             browser=self.metadata["browser"],
             extra_query_params=extra_query_params,
+            include_related=include_related
         )
 
     def load_data(self, **kwargs) -> None:
