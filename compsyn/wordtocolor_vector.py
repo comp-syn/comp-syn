@@ -142,17 +142,12 @@ class WordToColorVector(Vector):
 
         if include_related:
             # move related images to the same folder as primary results
-            try:
-                related_img_dir = self._local_raw_images_path.joinpath("related")
-                for related_img_path in related_img_dir.iterdir():
-                    related_img_path.rename(
-                        related_img_path.parents[1].joinpath(related_img_path.name)
-                    )
-                related_img_dir.rmdir()
-            except FileNotFoundError as exc:
-                raise FileNotFoundError(
-                    f"Expected to find related images at {related_img_dir}!"
-                ) from exc
+            related_img_dir = self._local_raw_images_path.joinpath("related")
+            for related_img_path in related_img_dir.iterdir():
+                related_img_path.rename(
+                    related_img_path.parents[1].joinpath(related_img_path.name)
+                )
+            related_img_dir.rmdir()
 
     def load_data(self, **kwargs) -> None:
         try:
@@ -239,7 +234,11 @@ class WordToColorVector(Vector):
     def _threaded_compressed_s3_upload(
         self, local_image_path: Path, overwrite: bool = False
     ) -> None:
-        compressed_image_path = compress_image(local_image_path)
+        try:
+            compressed_image_path = compress_image(local_image_path)
+        except IsADirectoryError:
+            # may have directories in the raw images folder, ignore them.
+            return 
         upload_file_to_s3(
             local_path=compressed_image_path,
             s3_path=self.raw_images_path.joinpath(local_image_path.name),

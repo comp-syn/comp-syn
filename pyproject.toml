@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "compsyn"
-version = "1.0.0b5"
+version = "1.0.0b6"
 description = "python package to explore the color of language"
 authors = ["comp-syn <group@comp-syn.com>"]
 
