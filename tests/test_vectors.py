@@ -73,7 +73,7 @@ def test_w2cv_produce_known_analysis_results():
 def test_w2cv_fresh_run():
     start = time.time()
     w2cv = WordToColorVector(label="dog", revision="raw-test")
-    w2cv.run_image_capture()
+    w2cv.run_image_capture(max_items=10)
     w2cv.run_analysis()
 
     # set results for the next two tests to use, better way to do this?
@@ -86,6 +86,18 @@ def test_w2cv_fresh_run():
 
     w2cv.save()
     print("full run completed in", round(time.time() - start, 2), "seconds")
+
+
+@pytest.mark.online
+def test_w2cv_fresh_run_with_related():
+    start = time.time()
+    w2cv = WordToColorVector(label="poodle")
+    w2cv.run_image_capture(max_items=10, include_related=True)
+    w2cv.run_analysis()
+
+    print(
+        "full run (with related) completed in", round(time.time() - start, 2), "seconds"
+    )
 
 
 @pytest.mark.credentials

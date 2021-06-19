@@ -137,8 +137,22 @@ class WordToColorVector(Vector):
             language=self.metadata["language"],
             browser=self.metadata["browser"],
             extra_query_params=extra_query_params,
-            track_related=include_related
+            track_related=include_related,
         )
+
+        if include_related:
+            # move related images to the same folder as primary results
+            try:
+                related_img_dir = self._local_raw_images_path.joinpath("related")
+                for related_img_path in related_img_dir.iterdir():
+                    related_img_path.rename(
+                        related_img_path.parents[1].joinpath(related_img_path.name)
+                    )
+                related_img_dir.rmdir()
+            except FileNotFoundError as exc:
+                raise FileNotFoundError(
+                    f"Expected to find related images at {related_img_dir}!"
+                ) from exc
 
     def load_data(self, **kwargs) -> None:
         try:
