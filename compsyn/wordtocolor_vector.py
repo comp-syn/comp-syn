@@ -155,6 +155,7 @@ class WordToColorVector(Vector):
             self.image_data.load_image_dict_from_folder(
                 path=self._local_raw_images_path, label=self.label, **kwargs
             )
+            self.image_analysis = ImageAnalysis(self.image_data)
         except FileNotFoundError as exc:
             raise FileNotFoundError(
                 f"No data found to load, run an image capture with run_image_capture"
@@ -169,7 +170,6 @@ class WordToColorVector(Vector):
 
         self.load_data()
 
-        self.image_analysis = ImageAnalysis(self.image_data)
         self.image_analysis.compute_color_distributions(self.label, ["jzazbz", "rgb"])
         self.image_analysis.get_composite_image()
 
