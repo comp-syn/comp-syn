@@ -160,7 +160,12 @@ class WordToColorVector(Vector):
                 f"No data found to load, run an image capture with run_image_capture"
             )
 
-    def run_analysis(self, wavelet_modes: Optional[List[str]] = None, **kwargs) -> None:
+    def run_analysis(
+        self,
+        wavelet_modes: Optional[List[str]] = None,
+        num_images: Optional[int] = None,
+        **kwargs,
+    ) -> None:
 
         self.load_data()
 
@@ -238,7 +243,7 @@ class WordToColorVector(Vector):
             compressed_image_path = compress_image(local_image_path)
         except IsADirectoryError:
             # may have directories in the raw images folder, ignore them.
-            return 
+            return
         upload_file_to_s3(
             local_path=compressed_image_path,
             s3_path=self.raw_images_path.joinpath(local_image_path.name),
