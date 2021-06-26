@@ -223,7 +223,6 @@ class WordToColorVector(Vector):
             "jzazbz_vector",
             "rgb_vector",
             "colorgram_vector",
-            "raw_images_metadata",
             "jzazbz_wavelet_embedding",
             "rgb_wavelet_embedding",
             "grey_wavelet_embedding",
