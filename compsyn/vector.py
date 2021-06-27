@@ -140,29 +140,35 @@ class Vector:
             f"saved {human_bytes(self._local_pickle_path.stat().st_size)} pickle to {self._local_pickle_path}"
         )
 
-    def pull(self, overwrite: bool = False, **kwargs) -> None:
+    def pull(
+        self, include_pickle: bool = True, overwrite: bool = False, **kwargs
+    ) -> None:
         """
         Optional remote Backend integration point
         Subclasses of Vector should call super().pull(**kwargs) if they extend pull
         """
-        if not s3_object_exists(s3_path=self.vector_pickle_path):
-            raise NoObjectInS3Error(
-                f"no S3 object exists for this Vector / Trial combination:\n\t{self.label}.{self.revision} {self.trial}"
+        if include_pickle:
+            if not s3_object_exists(s3_path=self.vector_pickle_path):
+                raise NoObjectInS3Error(
+                    f"no S3 object exists for this Vector / Trial combination:\n\t{self.label}.{self.revision} {self.trial}"
+                )
+            download_file_from_s3(
+                local_path=self._local_pickle_path, s3_path=self.vector_pickle_path,
             )
-        download_file_from_s3(
-            local_path=self._local_pickle_path, s3_path=self.vector_pickle_path,
-        )
-        self.load()
+            self.load()
 
-    def push(self, overwrite: bool = False, **kwargs) -> None:
+    def push(
+        self, include_pickle: bool = True, overwrite: bool = False, **kwargs
+    ) -> None:
         """
         Optional remote Backend integration point
         Subclasses of Vector should call super().push(**kwargs) if they extend push
         """
-        self.save()
-        upload_file_to_s3(
-            local_path=self._local_pickle_path, s3_path=self.vector_pickle_path,
-        )
+        if include_pickle:
+            self.save()
+            upload_file_to_s3(
+                local_path=self._local_pickle_path, s3_path=self.vector_pickle_path,
+            )
 
     # @abstractmethod
     def run_analysis(**kwargs) -> None:

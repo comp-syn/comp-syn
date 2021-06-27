@@ -25,30 +25,45 @@ class ImageAnalysis:
         self.rgb_dict = image_data.rgb_dict
         self.labels_list = image_data.labels_list
         self.log = get_logger(__class__.__name__)
+        self.default_color_params = {
+            "spacing": 36,
+            "num_bins": 8,
+            "num_channels": 3,
+            "Jz_min": 0.0,
+            "Jz_max": 0.167,
+            "Az_min": -0.1,
+            "Az_max": 0.11,
+            "Bz_min": -0.156,
+            "Bz_max": 0.115,
+            "h_max": 360,
+            "rgb_max": 255,
+        }
 
     def compute_color_distributions(
         self,
         labels=None,
         color_rep=["jzazbz", "hsv", "rgb"],
-        spacing=36,
-        num_bins=8,
-        num_channels=3,
-        Jz_min=0.0,
-        Jz_max=0.167,
-        Az_min=-0.1,
-        Az_max=0.11,
-        Bz_min=-0.156,
-        Bz_max=0.115,
-        h_max=360,
-        rgb_max=255,
+        spacing=None,
+        num_bins=None,
+        num_channels=None,
+        Jz_min=None,
+        Jz_max=None,
+        Az_min=None,
+        Az_max=None,
+        Bz_min=None,
+        Bz_max=None,
+        h_max=None,
+        rgb_max=None,
     ):
         """
         Calculates color distributions for each word in a dictionary
         
         Args:
             self (class instance): ImageAnalysis class instance
-            labels (string): if "default" grabs dictionary keys as labels
+            labels (string): if None grabs dictionary keys as labels
             color_rep(array): colorspaces to calculate distributions in
+
+            For the following args, if no value is provided, the instance-shared defaults are used:
             spacing(int): hue spacing for HSV distribution (in degrees)
             num_bins(int): number of bins to calculate 3D distributions in
             num_channels(int): number of color channels
@@ -83,14 +98,30 @@ class ImageAnalysis:
                         jzazbz_dist = color_distribution(
                             img_rgb=img_rgb,
                             colorspace="jzazbz",
-                            num_bins=num_bins,
-                            Jz_min=Jz_min,
-                            Jz_max=Jz_max,
-                            Az_min=Az_min,
-                            Az_max=Az_max,
-                            Bz_min=Bz_min,
-                            Bz_max=Bz_max,
-                            num_channels=num_channels,
+                            num_bins=num_bins
+                            if num_bins
+                            else self.default_color_params["num_bins"],
+                            Jz_min=Jz_min
+                            if Jz_min
+                            else self.default_color_params["Jz_min"],
+                            Jz_max=Jz_max
+                            if Jz_max
+                            else self.default_color_params["Jz_max"],
+                            Az_min=Az_min
+                            if Az_min
+                            else self.default_color_params["Az_min"],
+                            Az_max=Az_max
+                            if Az_max
+                            else self.default_color_params["Az_max"],
+                            Bz_min=Bz_min
+                            if Bz_min
+                            else self.default_color_params["Bz_min"],
+                            Bz_max=Bz_max
+                            if Bz_max
+                            else self.default_color_params["Bz_max"],
+                            num_channels=num_channels
+                            if num_channels
+                            else self.default_color_params["num_channels"],
                         )
                     except RuntimeWarning as exc:
                         failed_image_path = Path(tempfile.NamedTemporaryFile().name)
@@ -118,9 +149,13 @@ class ImageAnalysis:
                     dist = color_distribution(
                         img_rgb=img_rgb,
                         colorspace="hsv",
-                        rgb_max=rgb_max,
-                        spacing=spacing,
-                        h_max=h_max,
+                        rgb_max=rgb_max
+                        if rgb_max
+                        else self.default_color_params["rgb_max"],
+                        spacing=spacing
+                        if spacing
+                        else self.default_color_params["spacing"],
+                        h_max=h_max if h_max else self.default_color_params["h_max"],
                     )
                     dist_array.append(dist)
                     h_temp, s_temp, v_temp = avg_hsv(hsv_img)
@@ -140,7 +175,11 @@ class ImageAnalysis:
                 dist_array = list()
                 for i, img_rgb in enumerate(self.rgb_dict[key]):
                     try:
-                        rgb.append(avg_rgb(img_rgb))
+                        rgb_tuple = avg_rgb(img_rgb)
+                        if True in np.isnan(rgb_tuple):
+                            self.log.warning(f"Dropping rgb_tuple with NaN for {key}")
+                        else:
+                            rgb.append(rgb_tuple)
                     except RuntimeWarning as exc:
                         failed_image_path = Path(tempfile.NamedTemporaryFile().name)
                         PIL.Image.fromarray(img_rgb, "RGB").save(
@@ -153,9 +192,15 @@ class ImageAnalysis:
                         dist = color_distribution(
                             img_rgb=img_rgb,
                             colorspace="rgb",
-                            rgb_max=rgb_max,
-                            num_bins=num_bins,
-                            num_channels=num_channels,
+                            rgb_max=rgb_max
+                            if rgb_max
+                            else self.default_color_params["rgb_max"],
+                            num_bins=num_bins
+                            if num_bins
+                            else self.default_color_params["num_bins"],
+                            num_channels=num_channels
+                            if num_channels
+                            else self.default_color_params["num_channels"],
                         )
                     except RuntimeWarning as exc:
                         failed_image_path = Path(tempfile.NamedTemporaryFile().name)

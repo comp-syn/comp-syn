@@ -71,7 +71,6 @@ def set_env_var(key: str, val: Optional[str]) -> None:
             pass
     else:
         os.environ[key] = str(val)
-        log.debug(f"set {key} environment variable")
 
 
 class EnvDefault(argparse.Action):

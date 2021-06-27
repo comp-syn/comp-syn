@@ -12,7 +12,7 @@ Figures
 geckodriver.log
 no-experiment-name
 .DS_Store
-shared-env
 .coverage*
 build/
 tests/test-assets/default-experiment/
+.env

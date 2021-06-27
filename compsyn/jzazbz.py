@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 
 import numpy as np
 
@@ -28,16 +29,10 @@ def get_jzazbz_args(
     return parser
 
 
-def setup_jzazbz_array() -> None:
+@lru_cache
+def get_jzazbz_array() -> None:
     jzazbz_args, unknown = get_jzazbz_args().parse_known_args()
-    global JZAZBZ_ARRAY_NPY
-    JZAZBZ_ARRAY_NPY = np.load(jzazbz_args.jzazbz_array)
     get_logger("setup_jzazbz_array").debug(
         f"jzazbz transformation will use {jzazbz_args.jzazbz_array}"
     )
-
-
-try:
-    setup_jzazbz_array()
-except FileNotFoundError:
-    get_logger("setup_jzazbz_array").warning("no jzazbz_array.npy file found")
+    return np.load(jzazbz_args.jzazbz_array)

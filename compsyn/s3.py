@@ -194,6 +194,7 @@ def download_file_from_s3(
                 return
 
         s3_obj = s3_client.get_object(Bucket=s3_args.s3_bucket, Key=str(s3_path))
+        local_path.parent.mkdir(exist_ok=True, parents=True)
         local_path.write_bytes(s3_obj["Body"].read())
         log.debug(f"downloaded {local_path} from s3")
 
