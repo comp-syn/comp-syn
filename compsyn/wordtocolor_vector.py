@@ -77,7 +77,7 @@ class WordToColorVector(Vector):
         return output
 
     @property
-    def _local_raw_images_path() -> Path:
+    def _local_raw_images_path(self) -> Path:
         return Path(CompsynConfig().config["work_dir"]).joinpath(
             self.raw_images_path
         )
