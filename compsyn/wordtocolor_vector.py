@@ -5,6 +5,7 @@ import csv
 import json
 import os
 import time
+import shutil
 from functools import partial
 from pathlib import Path
 from multiprocessing.pool import ThreadPool
@@ -116,7 +117,10 @@ class WordToColorVector(Vector):
 
         if raw_images_available > 0 and overwrite:
             for p in self._local_raw_images_path.iterdir():
-                p.unlink()
+                if p.is_file():
+                    p.unlink()
+                else:
+                    shutil.rmtree(p)
             raw_images_available = 0
 
         # allow a small failure rate, as a small percentage of downloads will fail
@@ -142,6 +146,7 @@ class WordToColorVector(Vector):
 
         if include_related:
             # move related images to the same folder as primary results
+            self.log.info(f"flattening related images to main image directory")
             related_img_dir = self._local_raw_images_path.joinpath("related")
             for related_img_path in related_img_dir.iterdir():
                 related_img_path.rename(
