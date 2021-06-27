@@ -32,9 +32,6 @@ class WordToColorVector(Vector):
         self.image_analysis: Union[None, ImageAnalysis] = None
         self.number_of_images = number_of_images
         self.log = get_logger(self.__class__.__name__ + f".{self.label}")
-        self._local_raw_images_path = Path(CompsynConfig().config["work_dir"]).joinpath(
-            self.raw_images_path
-        )
         self.raw_image_urls = None
         self.log.debug(f"local downloads: {self._local_raw_images_path}")
 
@@ -78,6 +75,12 @@ class WordToColorVector(Vector):
             pass
 
         return output
+
+    @property
+    def _local_raw_images_path() -> Path:
+        return Path(CompsynConfig().config["work_dir"]).joinpath(
+            self.raw_images_path
+        )
 
     @property
     def _local_raw_images_available(self) -> bool:
