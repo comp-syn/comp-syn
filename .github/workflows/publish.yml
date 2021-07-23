@@ -1,11 +1,13 @@
-name: Test
+name: Publish 
 on:
   push: 
+    tags:
+      - "*"
 
 jobs:
-  pytest:
+  publish:
     environment: ci
-    name: Run pytest
+    name: Publish to PYPI
     runs-on: ubuntu-latest
 
     steps:
@@ -36,3 +38,9 @@ jobs:
         COMPSYN_BROWSER: Firefox
       run: |
         container=$(docker run -d ialcloud/comp-syn-base:1.0.0 sleep 60) && docker cp ${container}:/home/admin/jzazbz_array.npy . && poetry run pytest --cov=compsyn -s
+
+    - name: Publish Package to PYPI
+      env:
+        PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: | 
+        poetry config pypi-token.pypi ${PYPI_API_TOKEN} && poetry publish --build

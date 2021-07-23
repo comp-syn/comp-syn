@@ -37,10 +37,11 @@ class WordToColorVector(Vector):
 
         if "language" not in self.metadata:
             self.metadata["language"] = "en"
+        compsyn_config = CompsynConfig().config
         if "browser" not in self.metadata:
-            self.metadata["browser"] = CompsynConfig().config["browser"]
+            self.metadata["browser"] = compsyn_config["browser"]
         if "driver_path" not in self.metadata:
-            self.metadata["driver_path"] = CompsynConfig().config["driver_path"]
+            self.metadata["driver_path"] = compsyn_config["driver_path"] if "driver_path" in compsyn_config else None
 
     def __repr__(self) -> str:
         """ Nice looking representation """
