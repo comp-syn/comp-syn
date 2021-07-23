@@ -39,6 +39,8 @@ class WordToColorVector(Vector):
             self.metadata["language"] = "en"
         if "browser" not in self.metadata:
             self.metadata["browser"] = CompsynConfig().config["browser"]
+        if "driver_path" not in self.metadata:
+            self.metadata["driver_path"] = CompsynConfig().config["driver_path"]
 
     def __repr__(self) -> str:
         """ Nice looking representation """
@@ -78,9 +80,7 @@ class WordToColorVector(Vector):
 
     @property
     def _local_raw_images_path(self) -> Path:
-        return Path(CompsynConfig().config["work_dir"]).joinpath(
-            self.raw_images_path
-        )
+        return Path(CompsynConfig().config["work_dir"]).joinpath(self.raw_images_path)
 
     @property
     def _local_raw_images_available(self) -> bool:
@@ -143,6 +143,7 @@ class WordToColorVector(Vector):
             metadata=self.metadata,
             language=self.metadata["language"],
             browser=self.metadata["browser"],
+            driver_path=self.metadata["driver_path"],
             extra_query_params=extra_query_params,
             track_related=include_related,
         )
