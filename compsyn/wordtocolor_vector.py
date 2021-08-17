@@ -5,6 +5,7 @@ import csv
 import json
 import os
 import time
+import shutil
 from functools import partial
 from pathlib import Path
 from multiprocessing.pool import ThreadPool
@@ -31,16 +32,16 @@ class WordToColorVector(Vector):
         self.image_analysis: Union[None, ImageAnalysis] = None
         self.number_of_images = number_of_images
         self.log = get_logger(self.__class__.__name__ + f".{self.label}")
-        self._local_raw_images_path = Path(CompsynConfig().config["work_dir"]).joinpath(
-            self.raw_images_path
-        )
         self.raw_image_urls = None
         self.log.debug(f"local downloads: {self._local_raw_images_path}")
 
         if "language" not in self.metadata:
             self.metadata["language"] = "en"
+        compsyn_config = CompsynConfig().config
         if "browser" not in self.metadata:
-            self.metadata["browser"] = CompsynConfig().config["browser"]
+            self.metadata["browser"] = compsyn_config["browser"]
+        if "driver_path" not in self.metadata:
+            self.metadata["driver_path"] = compsyn_config["driver_path"] if "driver_path" in compsyn_config else None
 
     def __repr__(self) -> str:
         """ Nice looking representation """
@@ -56,13 +57,31 @@ class WordToColorVector(Vector):
 
         try:
             rounded_rgb_values = [f"{val:.2e}" for val in self.rgb_dist.tolist()]
-            output += f"\n\t\t{'rgb_dist':16s} = {rounded_rgb_values}"
-            output += f"\n\t\t{'jzazbz_dist':16s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
-            output += f"\n\t\t{'jzazbz_dist_std':16s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
+            output += f"\n\t\t{'rgb_dist':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist.tolist()])}"
+            output += f"\n\t\t{'rgb_dist_std':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist_std.tolist()])}"
+            output += f"\n\t\t{'jzazbz_dist':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
+            output += f"\n\t\t{'jzazbz_dist_std':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
+        except AttributeError:
+            pass
+
+        try:
+            output += f"\n\t\t{'jzazbz_wavelet_embedding':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_wavelet_embedding.tolist()])}"
+        except AttributeError:
+            pass
+        try:
+            output += f"\n\t\t{'rgb_wavelet_embedding':26s} = {json.dumps([round(val, 3) for val in self.rgb_wavelet_embedding.tolist()])}"
+        except AttributeError:
+            pass
+        try:
+            output += f"\n\t\t{'grey_wavelet_embedding':26s} = {json.dumps([round(val, 3) for val in self.grey_wavelet_embedding.tolist()])}"
         except AttributeError:
             pass
 
         return output
+
+    @property
+    def _local_raw_images_path(self) -> Path:
+        return Path(CompsynConfig().config["work_dir"]).joinpath(self.raw_images_path)
 
     @property
     def _local_raw_images_available(self) -> bool:
@@ -85,13 +104,27 @@ class WordToColorVector(Vector):
         for img_path in self._local_raw_images_path.iterdir():
             img_path.unlink()
 
-    def run_image_capture(self) -> None:
+    def run_image_capture(
+        self,
+        max_items: int = 100,
+        extra_query_params: Optional[Dict[str, str]] = None,
+        include_related: bool = False,
+        overwrite: bool = False,
+    ) -> None:
         """ Gather images from Google Images sets the attribute `self.raw_image_urls`"""
 
         # check if there are already raw images available already
         try:
             raw_images_available = len(list(self._local_raw_images_path.iterdir()))
         except FileNotFoundError:
+            raw_images_available = 0
+
+        if raw_images_available > 0 and overwrite:
+            for p in self._local_raw_images_path.iterdir():
+                if p.is_file():
+                    p.unlink()
+                else:
+                    shutil.rmtree(p)
             raw_images_available = 0
 
         # allow a small failure rate, as a small percentage of downloads will fail
@@ -107,11 +140,24 @@ class WordToColorVector(Vector):
             endpoint="google-images",
             query_terms=self.label,
             output_path=self._local_raw_images_path,
-            max_items=100,
+            max_items=max_items,
             metadata=self.metadata,
             language=self.metadata["language"],
             browser=self.metadata["browser"],
+            driver_path=self.metadata["driver_path"],
+            extra_query_params=extra_query_params,
+            track_related=include_related,
         )
+
+        if include_related:
+            # move related images to the same folder as primary results
+            self.log.info(f"flattening related images to main image directory")
+            related_img_dir = self._local_raw_images_path.joinpath("related")
+            for related_img_path in related_img_dir.iterdir():
+                related_img_path.rename(
+                    related_img_path.parents[1].joinpath(related_img_path.name)
+                )
+            related_img_dir.rmdir()
 
     def load_data(self, **kwargs) -> None:
         try:
@@ -119,16 +165,21 @@ class WordToColorVector(Vector):
             self.image_data.load_image_dict_from_folder(
                 path=self._local_raw_images_path, label=self.label, **kwargs
             )
+            self.image_analysis = ImageAnalysis(self.image_data)
         except FileNotFoundError as exc:
             raise FileNotFoundError(
                 f"No data found to load, run an image capture with run_image_capture"
             )
 
-    def run_analysis(self, **kwargs) -> None:
+    def run_analysis(
+        self,
+        wavelet_modes: Optional[List[str]] = None,
+        num_images: Optional[int] = None,
+        **kwargs,
+    ) -> None:
 
         self.load_data()
 
-        self.image_analysis = ImageAnalysis(self.image_data)
         self.image_analysis.compute_color_distributions(self.label, ["jzazbz", "rgb"])
         self.image_analysis.get_composite_image()
 
@@ -150,19 +201,15 @@ class WordToColorVector(Vector):
 
         self.colorgram = PIL.Image.fromarray(self.colorgram_vector.astype(np.uint8))
 
-        self.jzazbz_wavelet_embedding = get_wavelet_embedding(
-            im=self.colorgram, mode="JzAzBz"
-        )
-        self.rgb_wavelet_embedding = get_wavelet_embedding(
-            im=self.colorgram, mode="RGB"
-        )
-        self.grey_wavelet_embedding = get_wavelet_embedding(
-            im=self.colorgram, mode="Grey"
-        )
+        if wavelet_modes is None:
+            wavelet_modes = ["JzAzBz", "RGB", "Grey"]
 
-    def run(self, **kwargs) -> None:
-        self.run_image_capture()
-        self.run_analysis()
+        for wavelet_mode in wavelet_modes:
+            setattr(
+                self,
+                f"{wavelet_mode.lower()}_wavelet_embedding",
+                get_wavelet_embedding(im=self.colorgram, mode=wavelet_mode),
+            )
 
     def print_word_color(self, size: int = 30, color_magnitude: float = 1.65) -> None:
 
@@ -186,7 +233,9 @@ class WordToColorVector(Vector):
             "jzazbz_vector",
             "rgb_vector",
             "colorgram_vector",
-            "raw_images_metadata",
+            "jzazbz_wavelet_embedding",
+            "rgb_wavelet_embedding",
+            "grey_wavelet_embedding",
         ]:
             if hasattr(to_be_saved, del_attr):
                 delattr(to_be_saved, del_attr)
@@ -199,7 +248,11 @@ class WordToColorVector(Vector):
     def _threaded_compressed_s3_upload(
         self, local_image_path: Path, overwrite: bool = False
     ) -> None:
-        compressed_image_path = compress_image(local_image_path)
+        try:
+            compressed_image_path = compress_image(local_image_path)
+        except IsADirectoryError:
+            # may have directories in the raw images folder, ignore them.
+            return
         upload_file_to_s3(
             local_path=compressed_image_path,
             s3_path=self.raw_images_path.joinpath(local_image_path.name),
@@ -237,6 +290,7 @@ class WordToColorVector(Vector):
         super().pull(**kwargs)
         if include_raw_images:
             # pull raw images
+            self._local_raw_images_path.mkdir(exist_ok=True, parents=True)
             self.log.debug(f"pulling raw images (ovewrite={overwrite})...")
             s3_paths = list(list_object_paths_in_s3(s3_prefix=self.raw_images_path))
             start = time.time()

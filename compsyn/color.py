@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 from collections import Counter
 
 from .logger import get_logger
+from .jzazbz import get_jzazbz_array
 
 
 def kl_divergence(dist1, dist2, symmetrized=True):
@@ -69,18 +70,13 @@ def rgb_array_to_jzazbz_array(rgb_array: np.ndarray) -> np.ndarray:
     r = rgb_array[:, :, 0].reshape([-1])
     g = rgb_array[:, :, 1].reshape([-1])
     b = rgb_array[:, :, 2].reshape([-1])
-    try:
-        from .jzazbz import JZAZBZ_ARRAY_NPY
-    except ImportError as exc:
-        raise ImportError(
-            f"This usually means that no jzazbz_array.npy file could be found at {os.getenv('COMPSYN_JZAZBZ_ARRAY')}"
-        ) from exc
 
+    jzazbz_array_npy = get_jzazbz_array()
     try:
-        jzazbz_vals = JZAZBZ_ARRAY_NPY[r, g, b]
+        jzazbz_vals = jzazbz_array_npy[r, g, b]
     except IndexError as exc:
         raise ColorSpaceConversionError(
-            f"input shape: {rgb_array.shape}. One of r:{r}, g:{g}, b:{b} is not an integer. input: {rgb_array}"
+            f"Input shape: {rgb_array.shape}. r:{r}, g:{g}, b:{b}. Input: {rgb_array}"
         ) from exc
 
     jzazbz_array = jzazbz_vals.reshape(list(rgb_array.shape[:3])).transpose([0, 1, 2])
@@ -175,12 +171,12 @@ def color_distribution(
     """
 
     def _check_required_args(required_args: List[Any]) -> None:
-        for required in required_args:
+        for i, required in enumerate(required_args):
             try:
-                assert required is not None
+                assert required is not None, f"{i}: {required} must be set"
             except AssertionError:
                 raise MissingArgumentError(
-                    "Missing one or more required arguments for computing {colorspace} distribution"
+                    f"Missing one or more required arguments for computing {colorspace} distribution"
                 )
 
     if colorspace == "jzazbz":

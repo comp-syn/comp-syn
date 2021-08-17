@@ -1,24 +1,36 @@
-name: Test (on PR)
+name: Test (no credentials)
 on:
   pull_request: 
 
 jobs:
-  test:
+  pytestPR:
     environment: ci
-    name: Run test suite
+    name: Run pytest
     runs-on: ubuntu-latest
-    env:
-      COMPOSE_FILE: .ci/docker-compose.yml
-      COMPSYN_S3_ACCESS_KEY_ID: ${{ secrets.COMPSYN_S3_ACCESS_KEY_ID }}
-      COMPSYN_S3_SECRET_ACCESS_KEY: ${{ secrets.COMPSYN_S3_SECRET_ACCESS_KEY }}
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Build docker images
-      run: docker-compose build
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
 
-    - name: Run non-credentialed pytest coverage 
+    - uses: Gr1N/setup-poetry@v4
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+    
+    - name: Install dependencies
       run: |
-        docker-compose --env-file ./.ci/.env.pytest run comp-syn /home/admin/.poetry/bin/poetry run python -m pytest -m "unit or integration or online" -s
+        poetry install
+
+    - name: Download non-code dependencies
+      run: |
+        container=$(docker run -d ialcloud/comp-syn-base:1.0.0 sleep 60) && docker cp ${container}:/home/admin/jzazbz_array.npy .
+
+    - name: Run full pytest coverage 
+      run: |
+        container=$(docker run -d ialcloud/comp-syn-base:1.0.0 sleep 60) && docker cp ${container}:/home/admin/jzazbz_array.npy . && poetry run pytest -m "unit or integration or online" -s
