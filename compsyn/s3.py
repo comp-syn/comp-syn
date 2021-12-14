@@ -166,7 +166,7 @@ def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) 
             attr: getattr(s3_client, attr) for attr in s3_client.__dict__.keys()
         }
         s3_client_attributes.update(
-            {"bucket": bucket, "object_path": object_path,}
+            {"bucket": s3_args.s3_bucket, "object_path": s3_path,}
         )
         raise S3Error(f"{s3_client_attributes} S3 ClientError")
 
