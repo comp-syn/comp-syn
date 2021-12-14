@@ -160,7 +160,7 @@ def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) 
         )
         log.debug(f"uploaded s3://{s3_args.s3_bucket}/{s3_path}")
 
-    except s3_client.exceptions.ClientError:
+    except s3_client.exceptions.ClientError as exc:
         # catch and raise any errors generated while attempting to communicate with s3
         s3_client_attributes = {
             attr: getattr(s3_client, attr) for attr in s3_client.__dict__.keys()
@@ -168,7 +168,7 @@ def upload_file_to_s3(local_path: Path, s3_path: Path, overwrite: bool = False) 
         s3_client_attributes.update(
             {"bucket": s3_args.s3_bucket, "object_path": s3_path,}
         )
-        raise S3Error(f"{s3_client_attributes} S3 ClientError")
+        raise S3Error(f"{s3_client_attributes} S3 ClientError") from exc
 
 
 def download_file_from_s3(
