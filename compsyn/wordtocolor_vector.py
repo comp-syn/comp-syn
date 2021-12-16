@@ -57,8 +57,8 @@ class WordToColorVector(Vector):
 
         try:
             rounded_rgb_values = [f"{val:.2e}" for val in self.rgb_dist.tolist()]
-            output += f"\n\t\t{'rgb_dist':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist.tolist()])}"
-            output += f"\n\t\t{'rgb_dist_std':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist_std.tolist()])}"
+            output += f"\n\t\t{'rgb_dist':26s} = {json.dumps([round(val, 6) for val in self.rgb_dist.tolist()])}"
+            output += f"\n\t\t{'rgb_dist_std':26s} = {json.dumps([round(val, 6) for val in self.rgb_dist_std.tolist()])}"
             output += f"\n\t\t{'jzazbz_dist':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
             output += f"\n\t\t{'jzazbz_dist_std':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
         except AttributeError:
