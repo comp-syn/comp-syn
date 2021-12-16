@@ -294,12 +294,14 @@ class Visualisation:
         import tempfile
 
         temp_dir = tempfile.TemporaryDirectory().name
+        Path(temp_dir).mkdir(exist_ok=True, parents=True)
         for x0, y0, label in zip(x, y, jzazbz_keys):
-            temp_file = Path(temp_dir).joinpath(label)
-            PIL.Image.fromarray(self.image_analysis.compressed_img_dict[label]).save(
-                str(temp_file)
-            )
-            ab = AnnotationBbox(getImage(tmp_file), (x0, y0), frameon=False)
+            temp_file = Path(temp_dir).joinpath(label).with_suffix(".png")
+            cg_array = self.image_analysis.compressed_img_dict[label]
+
+            PIL.Image.fromarray(cg_array.astype(np.uint8)).save(str(temp_file))
+
+            ab = AnnotationBbox(getImage(str(temp_file)), (x0, y0), frameon=False)
             ax.add_artist(ab)
 
         plt.xticks([])

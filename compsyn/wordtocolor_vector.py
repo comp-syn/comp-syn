@@ -41,7 +41,11 @@ class WordToColorVector(Vector):
         if "browser" not in self.metadata:
             self.metadata["browser"] = compsyn_config["browser"]
         if "driver_path" not in self.metadata:
-            self.metadata["driver_path"] = compsyn_config["driver_path"] if "driver_path" in compsyn_config else None
+            self.metadata["driver_path"] = (
+                compsyn_config["driver_path"]
+                if "driver_path" in compsyn_config
+                else None
+            )
 
     def __repr__(self) -> str:
         """ Nice looking representation """
@@ -57,8 +61,8 @@ class WordToColorVector(Vector):
 
         try:
             rounded_rgb_values = [f"{val:.2e}" for val in self.rgb_dist.tolist()]
-            output += f"\n\t\t{'rgb_dist':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist.tolist()])}"
-            output += f"\n\t\t{'rgb_dist_std':26s} = {json.dumps([round(val, 3) for val in self.rgb_dist_std.tolist()])}"
+            output += f"\n\t\t{'rgb_dist':26s} = {json.dumps([round(val, 6) for val in self.rgb_dist.tolist()])}"
+            output += f"\n\t\t{'rgb_dist_std':26s} = {json.dumps([round(val, 6) for val in self.rgb_dist_std.tolist()])}"
             output += f"\n\t\t{'jzazbz_dist':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist.tolist()])}"
             output += f"\n\t\t{'jzazbz_dist_std':26s} = {json.dumps([round(val, 3) for val in self.jzazbz_dist_std.tolist()])}"
         except AttributeError:

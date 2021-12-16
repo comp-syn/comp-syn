@@ -4,8 +4,7 @@ import warnings
 
 import numpy as np
 from PIL import Image
-from kymatio import Scattering2D
-import torch
+from kymatio.numpy import Scattering2D
 
 from .datahelper import rgb_array_to_jzazbz_array
 from .logger import get_logger
@@ -39,9 +38,8 @@ def perform_scattering_transform(im: np.ndarray, L: int = 4, J: int = 5) -> np.n
     """Performs scattering transform on single channel  image array
 	In: im (numpy ndarray (128x128))
 	Out: scattering coefficient (list)"""
-    scattering = Scattering2D(J=J, shape=im.shape, L=L, max_order=2)
-    img_tensor = torch.tensor(im.astype(np.float32) / 255.0)
-    scattering_coefficients = scattering(img_tensor)
+    S2D = Scattering2D(J=J, shape=im.shape, L=L, max_order=2)
+    scattering_coefficients = S2D.scattering(im.astype(np.float32) / 255.0)
     scattering_coefficients = np.array(scattering_coefficients)
     sc = []
     scattering_coefficients = (

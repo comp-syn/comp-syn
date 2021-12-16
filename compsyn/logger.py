@@ -38,6 +38,7 @@ def get_logger(
             logging.Formatter(CONSOLE_FORMAT, CONSOLE_TIME_FORMAT)
         )
         logger.addHandler(console_handler)
+        logger.debug(f"added console handler")
     if log_file is not None:
         log_file = Path(log_file)
         if len(logger.handlers) == 0 or not max(
@@ -47,5 +48,6 @@ def get_logger(
             file_handler.setLevel(file_level)
             file_handler.setFormatter(logging.Formatter(FILE_FORMAT, FILE_TIME_FORMAT))
             logger.addHandler(file_handler)
+            logger.debug(f"added file handler")
 
     return logger
