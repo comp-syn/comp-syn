@@ -299,9 +299,7 @@ class Visualisation:
             temp_file = Path(temp_dir).joinpath(label).with_suffix(".png")
             cg_array = self.image_analysis.compressed_img_dict[label]
 
-            PIL.Image.fromarray(cg_array.astype(np.uint8)).save(
-                str(temp_file)
-            )
+            PIL.Image.fromarray(cg_array.astype(np.uint8)).save(str(temp_file))
 
             ab = AnnotationBbox(getImage(str(temp_file)), (x0, y0), frameon=False)
             ax.add_artist(ab)
