@@ -294,7 +294,7 @@ class Visualisation:
         import tempfile
 
         temp_dir = tempfile.TemporaryDirectory().name
-        Path(temp_dir).parent.mkdir(exist_ok=True, parents=True)
+        Path(temp_dir).mkdir(exist_ok=True, parents=True)
         for x0, y0, label in zip(x, y, jzazbz_keys):
             temp_file = Path(temp_dir).joinpath(label).with_suffix(".png")
             cg_array = self.image_analysis.compressed_img_dict[label]
