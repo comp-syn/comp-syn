@@ -18,7 +18,9 @@ def test_Visualisation() -> None:
     plt.clf()
     plt.close()
 
-    CompsynConfig(work_dir=Path(__file__).parent.joinpath("test-assets"),)
+    CompsynConfig(
+        work_dir=Path(__file__).parent.joinpath("test-assets"),
+    )
     trial = Trial(
         experiment_name="test-downloads",
         trial_id="known-dist",

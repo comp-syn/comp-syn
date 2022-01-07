@@ -15,4 +15,5 @@ no-experiment-name
 .coverage*
 build/
 tests/test-assets/default-experiment/
+tests/test-assets/test-patterns/
 .env

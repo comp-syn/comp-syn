@@ -16,7 +16,9 @@ def test_CompsynConfig() -> None:
     }
 
     config = CompsynConfig(
-        experiment_name="test-patterns", trial_id="phase-0", hostname="pytester",
+        experiment_name="test-patterns",
+        trial_id="phase-0",
+        hostname="pytester",
     )
 
     assert os.getenv("COMPSYN_EXPERIMENT_NAME") == "test-patterns"
@@ -30,7 +32,9 @@ def test_CompsynConfig() -> None:
     assert trial.hostname == "pytester"
 
     config = CompsynConfig(
-        experiment_name="test-patterns", trial_id="phase-1", hostname="pytester",
+        experiment_name="test-patterns",
+        trial_id="phase-1",
+        hostname="pytester",
     )
 
     print(config)
