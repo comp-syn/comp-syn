@@ -19,6 +19,9 @@ def validate_w2cv(
     expected_rgb_ratio: List[float],
     rel: float = 1e-6,
 ) -> None:
+    print("computed rgb dist:", w2cv.rgb_dist)
+    print("computed jzazbz dist:", w2cv.jzazbz_dist)
+    print("computed rgb ratio:", w2cv.rgb_ratio)
     for i, v in enumerate(expected_rgb_dist):
         assert v == approx(w2cv.rgb_dist[i], rel=rel, abs=1e-10)
     for i, v in enumerate(expected_jzazbz_dist):
@@ -30,10 +33,12 @@ def validate_w2cv(
 @pytest.mark.integration
 def test_w2cv_produce_known_analysis_results():
     """
-	creates vector object for the saved love image set and tests distributions and ratios.
-	"""
+    creates vector object for the saved love image set and tests distributions and ratios.
+    """
 
-    CompsynConfig(work_dir=Path(__file__).parent.joinpath("test-assets"),)
+    CompsynConfig(
+        work_dir=Path(__file__).parent.joinpath("test-assets"),
+    )
     trial = Trial(
         experiment_name="test-downloads",
         trial_id="known-dist",
@@ -46,26 +51,26 @@ def test_w2cv_produce_known_analysis_results():
     validate_w2cv(
         w2cv=w2cv,
         expected_rgb_dist=[
-            1.89736450e-07,
-            6.40508963e-08,
-            4.61866761e-09,
-            8.04098130e-08,
-            1.60031875e-08,
-            1.87863849e-09,
-            1.86990891e-08,
-            1.07072293e-07,
+            1.90415631e-07,
+            6.38808753e-08,
+            4.48634131e-09,
+            8.02620816e-08,
+            1.56456526e-08,
+            1.76758597e-09,
+            1.85108979e-08,
+            1.07499970e-07,
         ],
         expected_jzazbz_dist=[
-            243.92783389,
-            172.05688373,
-            3.19593217,
-            54.89909299,
-            151.00108506,
-            148.22235232,
-            3.8768293,
-            64.57348934,
+            244.12465444,
+            173.21539068,
+            3.04959916,
+            54.23655512,
+            150.68078842,
+            149.05550707,
+            3.70381827,
+            63.68718565,
         ],
-        expected_rgb_ratio=[0.24078636, 0.35787702, 0.40133662],
+        expected_rgb_ratio=[0.24074674, 0.35789798, 0.40135529],
     )
 
 

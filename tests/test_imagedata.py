@@ -69,7 +69,8 @@ def test_load_image_dict_from_folder() -> None:
 
     image_data = ImageData(compress_dims=(500, 500))
     image_data.load_image_dict_from_folder(
-        TEST_IMAGES, label="atlantis",
+        TEST_IMAGES,
+        label="atlantis",
     )
 
     assert image_data.compress_dims == (500, 500)
