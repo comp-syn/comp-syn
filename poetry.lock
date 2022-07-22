@@ -1320,7 +1320,7 @@ py = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qloader"
-version = "8.1.6"
+version = "8.1.7"
 description = "Gather results from some search engine"
 category = "main"
 optional = false
@@ -1337,7 +1337,7 @@ selenium = "*"
 type = "git"
 url = "https://github.com/z-tasker/qloader"
 reference = "master"
-resolved_reference = "9bf0d8dd75e262f85a7abc287c4d5f288de639aa"
+resolved_reference = "f89c93219c476afd4d4b946464bf4b55f2fe123b"
 
 [[package]]
 name = "regex"
