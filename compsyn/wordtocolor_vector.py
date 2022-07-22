@@ -163,9 +163,9 @@ class WordToColorVector(Vector):
                 )
             related_img_dir.rmdir()
 
-    def load_data(self, **kwargs) -> None:
+    def load_data(self, compress_dim: int = 300, **kwargs) -> None:
         try:
-            self.image_data = ImageData()
+            self.image_data = ImageData(compress_dims=(compress_dim, compress_dim))
             self.image_data.load_image_dict_from_folder(
                 path=self._local_raw_images_path, label=self.label, **kwargs
             )
@@ -179,13 +179,13 @@ class WordToColorVector(Vector):
         self,
         wavelet_modes: Optional[List[str]] = None,
         num_images: Optional[int] = None,
-        **kwargs,
+        compress_dim: int = 300,
     ) -> None:
 
-        self.load_data()
+        self.load_data(compress_dim)
 
         self.image_analysis.compute_color_distributions(self.label, ["jzazbz", "rgb"])
-        self.image_analysis.get_composite_image()
+        self.image_analysis.get_composite_image(compress_dim=compress_dim)
 
         self.jzazbz_vector = np.mean(
             self.image_analysis.jzazbz_dict[self.label], axis=0
