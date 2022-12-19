@@ -5,7 +5,7 @@ description = "python package to explore the color of language"
 authors = ["comp-syn <group@comp-syn.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
+python = ">=3.8,<3.11"
 google-api-core = "*"
 google-auth = "*"
 google-cloud = "*"
