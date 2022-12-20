@@ -124,7 +124,7 @@ pywin32==305 ; sys_platform == "win32" and platform_python_implementation != "Py
 pywinpty==2.0.9 ; python_version >= "3.8" and python_version < "3.11" and os_name == "nt"
 pyyaml==6.0 ; python_version >= "3.8" and python_version < "3.11"
 pyzmq==24.0.1 ; python_version >= "3.8" and python_version < "3.11"
-qloader==8.1.8 ; python_version >= "3.8" and python_version < "3.11"
+qloader==8.2.0 ; python_version >= "3.8" and python_version < "3.11"
 regex==2022.10.31 ; python_version >= "3.8" and python_version < "3.11"
 requests==2.28.1 ; python_version >= "3.8" and python_version < "3.11"
 rfc3339-validator==0.1.4 ; python_version >= "3.8" and python_version < "3.11"
