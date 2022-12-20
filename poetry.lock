@@ -2880,14 +2880,14 @@ py = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qloader"
-version = "8.1.8"
+version = "8.2.0"
 description = "Gather results from some search engine"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "qloader-8.1.8-py3-none-any.whl", hash = "sha256:a01595b80727d46d01831cce8e7522e5b4814e6625ec230beb88ede6550457f0"},
-    {file = "qloader-8.1.8.tar.gz", hash = "sha256:165ed69c2fa71fef24a3865c7fa9171723d968ed1500bdf55b1ed582b0c92023"},
+    {file = "qloader-8.2.0-py3-none-any.whl", hash = "sha256:3ef6b4a7f13a8051496e087ee918096598bc4d305bddf3d920e88a94f7d55774"},
+    {file = "qloader-8.2.0.tar.gz", hash = "sha256:5ee36ffb984a76a1e808238c0b55c19f48a812940e38b86c4c783bd866af1707"},
 ]
 
 [package.dependencies]
